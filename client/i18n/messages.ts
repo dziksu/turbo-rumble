@@ -1,5 +1,19 @@
 // Gettext-style source keys keep Polish templates readable and allow typed runtime messages.
 export const EN = {
+  'Statystyki serwera': 'Server activity',
+  'Graczy online': 'Players online',
+  'Aktywne pokoje': 'Active rooms',
+  'Pokoje / limit': 'Rooms / limit',
+  'Sprawdzanie serwera…': 'Checking server…',
+  'Serwer online': 'Server online',
+  'Limit pokojów osiągnięty': 'Room limit reached',
+  'Statystyki chwilowo niedostępne': 'Live stats temporarily unavailable',
+  'Połączeni gracze, bez botów i ekranów hosta.':
+    'Connected players, excluding bots and host screens.',
+  'Pokoje z połączonym ekranem hosta lub graczem.': 'Rooms with a connected host screen or player.',
+  'Utworzone pokoje / limit serwera. Puste pokoje zajmują miejsce do wygaśnięcia.':
+    'Created rooms / server limit. Empty rooms occupy a slot until they expire.',
+
   'Licencja gry': 'Game license',
   '— autorski kod gry do użytku niekomercyjnego. Zewnętrzne zasoby zachowują własne licencje.':
     '— original game code for noncommercial use. Third-party assets retain their own licenses.',

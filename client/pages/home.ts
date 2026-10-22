@@ -1,3 +1,4 @@
+import { mountServerStats } from '../server-stats.ts';
 import { mountCinematicBackground } from '../cinematic-background.ts';
 import { mountLanguageSwitch } from '../i18n.ts';
 import { app, $, header, toast } from '../core/dom.ts';
@@ -97,7 +98,25 @@ export async function home() {
       </div>
     </main>
     <footer class="launch-footer">
-      <span>GAZ. CHAOS. REWANŻ.</span>
+      <div class="server-stats" aria-label="Statystyki serwera" data-no-i18n>
+        <span class="server-status-light" aria-hidden="true"></span>
+        <dl class="server-counts">
+          <div>
+            <dt data-stat-label="players"></dt>
+            <dd data-stat="players">—</dd>
+          </div>
+          <div>
+            <dt data-stat-label="activeRooms"></dt>
+            <dd data-stat="activeRooms">—</dd>
+          </div>
+          <div>
+            <dt data-stat-label="rooms"></dt>
+            <dd data-stat="rooms">— / —</dd>
+          </div>
+        </dl>
+        <span class="server-stats-error" hidden></span>
+        <span class="visually-hidden" role="status" data-stat-status></span>
+      </div>
       <nav aria-label="Informacje o grze">
         <a href="/author">Autor</a><a href="/credits">Zasoby i licencje</a
         ><a class="repo-link" href="https://github.com/dziksu/turbo-rumble">Kod źródłowy ↗</a>
@@ -144,4 +163,5 @@ export async function home() {
   $('#open-rules').onclick = () => $<HTMLDialogElement>('#rules').showModal();
   $('.dialog-close').onclick = () => $<HTMLDialogElement>('#rules').close();
   mountCinematicBackground(app);
+  mountServerStats(app);
 }

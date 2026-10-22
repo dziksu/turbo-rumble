@@ -2,7 +2,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { Race } from '../shared/simulation.ts';
 import { MAX_PLAYERS } from '../shared/rules.ts';
 import type { Session } from '../shared/types.ts';
-import type { HostCommand } from '../shared/protocol.ts';
+import type { HostCommand, ServerStats } from '../shared/protocol.ts';
 
 export interface Room {
   code: string;
@@ -40,6 +40,18 @@ export class RoomError extends Error {
 export class RoomRegistry {
   readonly rooms = new Map<string, Room>();
   constructor(private readonly maxRooms = 50) {}
+  stats(): ServerStats {
+    let players = 0,
+      activeRooms = 0;
+    for (const room of this.rooms.values()) {
+      let online = 0;
+      for (const car of room.race.cars.values())
+        if (!car.bot && car.connected && room.playerSockets.has(car.id)) online++;
+      players += online;
+      if (room.hosts.size || online) activeRooms++;
+    }
+    return { players, activeRooms, rooms: this.rooms.size, maxRooms: this.maxRooms };
+  }
   create(): { room: Room; session: Session } {
     if (this.rooms.size >= this.maxRooms)
       throw new RoomError('Za dużo pokojów. Spróbuj ponownie za minutę.', 429);

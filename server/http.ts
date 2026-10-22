@@ -32,6 +32,14 @@ export function registerHttp(
       .status(isClosing() ? 503 : 200)
       .json({ ok: !isClosing(), game: 'Turbo Rumble', rooms: registry.rooms.size }),
   );
+  app.get('/api/stats', (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    if (isClosing()) {
+      res.status(503).json({ error: 'Serwer jest zatrzymywany.' });
+      return;
+    }
+    res.json(registry.stats());
+  });
   app.get('/api/info', (_req, res) => res.json(networkInfo(config)));
   app.get('/api/results', (_req, res) => res.json(results.latest()));
   app.post(['/api/rooms', '/api/join'], (req, res, next) => {
