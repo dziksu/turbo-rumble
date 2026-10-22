@@ -1,18 +1,35 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" prefix="og: https://ogp.me/ns#">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#121c2c" />
-    <meta
-      name="description"
-      content="Turbo Rumble — one shared screen, phones as controllers. Race, fire rockets and survive the mayhem."
-    />
-    <title>Turbo Rumble — Gas. Chaos. Rematch.</title>
+    <!-- seo:start -->
+    <!-- Metadata is rendered here by Vite and the production server. -->
+    <!-- seo:end -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <style>
+      .html-fallback {
+        max-width: 56rem;
+        margin: 3rem auto;
+        padding: 1.5rem;
+        font:
+          18px/1.65 system-ui,
+          sans-serif;
+        color: #172536;
+        background: #fff9ed;
+        border-radius: 16px;
+      }
+      .html-fallback h1 {
+        line-height: 1.2;
+      }
+      .html-fallback a {
+        text-decoration: underline;
+      }
+    </style>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app"><!-- static-content:start --><!-- static-content:end --></div>
     <script type="module" src="/client/main.ts"></script>
   </body>
 </html>

@@ -32,9 +32,13 @@ export async function home() {
     <main class="launch-main">
       <section class="launch-copy" aria-labelledby="launch-title">
         <p class="eyebrow"><span class="live-dot"></span> JEDEN EKRAN. CAŁA EKIPA.</p>
-        <h1 id="launch-title">MAŁE AUTA.<br />WIELKA<br /><span>ROZRÓBA.</span></h1>
+        <h1 id="launch-title">
+          <span class="visually-hidden">Turbo Rumble — </span>MAŁE AUTA.<br />WIELKA<br /><span
+            >ROZRÓBA.</span
+          >
+        </h1>
         <p class="launch-description">
-          Zamień telefon w pad. Skacz, dryfuj i zrób rozróbę ze znajomymi.
+          Darmowe wyścigi w przeglądarce dla 2–8 graczy. Zamień telefon w pad.
         </p>
         <p class="launch-device">NA KOMPUTERZE LUB TV</p>
         <button class="button primary" id="create-room">Stwórz pokój <span>↗</span></button>

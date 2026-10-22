@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Turbo Rumble — social card source</title>
+    <style>
+      @font-face {
+        font-family: Bungee;
+        src: url('/node_modules/@fontsource/bungee/files/bungee-latin-400-normal.woff2')
+          format('woff2');
+        font-weight: 400;
+      }
+      @font-face {
+        font-family: Space;
+        src: url('/node_modules/@fontsource/space-grotesk/files/space-grotesk-latin-700-normal.woff2')
+          format('woff2');
+        font-weight: 700;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        background: #101c22;
+      }
+      .card {
+        width: 1200px;
+        height: 630px;
+        overflow: hidden;
+        position: relative;
+        color: #fff8ec;
+        font-family: Space, sans-serif;
+      }
+      .art {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 60% center;
+      }
+      .shade {
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(90deg, #0b171ff5, #0b171fd6 32%, #0b171f24 72%),
+          linear-gradient(0deg, #0b171fe6, transparent 45%);
+      }
+      .content {
+        position: absolute;
+        inset: 44px 52px 38px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .bolt {
+        display: grid;
+        place-items: center;
+        height: 64px;
+        width: 58px;
+        background: #ffc34a;
+        border-radius: 10px;
+        color: #172536;
+        font: 68px/1 sans-serif;
+        transform: skew(-8deg);
+      }
+      .brand img {
+        width: 133px;
+        height: auto;
+        filter: brightness(0) invert(1);
+      }
+      h1 {
+        font:
+          400 61px/1.04 Bungee,
+          sans-serif;
+        letter-spacing: -1.8px;
+        margin: 40px 0 20px;
+      }
+      h1 span {
+        color: #ffc34a;
+      }
+      p {
+        font-size: 24px;
+        line-height: 1.4;
+        margin: 0;
+      }
+      .tags {
+        font-size: 14px;
+        letter-spacing: 1.5px;
+        margin-top: 28px;
+        color: #ffc34a;
+      }
+      footer {
+        margin-top: auto;
+        display: flex;
+        width: 100%;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid #fff5;
+        padding-top: 20px;
+        font-size: 18px;
+      }
+      footer span {
+        color: #d8e7e0;
+        font-size: 13px;
+        letter-spacing: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card" aria-label="Turbo Rumble social preview">
+      <img
+        class="art"
+        src="/assets/cinematics/desert.webp"
+        alt="Cinematic menu illustration with racing cars and an explosion"
+      />
+      <div class="shade"></div>
+      <div class="content">
+        <div class="brand">
+          <span class="bolt">ϟ</span><img src="/brand-wordmark.svg" alt="Turbo Rumble" />
+        </div>
+        <h1>TINY CARS.<br /><span>BIG MAYHEM.</span></h1>
+        <p>One screen.<br />Phones as controllers.</p>
+        <div class="tags">2–8 PLAYERS &nbsp; / &nbsp; THREE MAPS &nbsp; / &nbsp; FREE TO PLAY</div>
+        <footer>turborumble.rastwork.pl <span>PLAY IN YOUR BROWSER ↗</span></footer>
+      </div>
+    </main>
+  </body>
+</html>

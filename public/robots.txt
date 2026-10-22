@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /host/
+Disallow: /join
+Disallow: /api/
+Disallow: /socket.io/
+Disallow: /handling-check
+Disallow: /audio-check
+Disallow: /map-check
+Disallow: /equipment-check
+Disallow: /scripts/
+
+Sitemap: https://turborumble.rastwork.pl/sitemap.xml

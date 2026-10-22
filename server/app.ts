@@ -1,6 +1,8 @@
 import express from 'express';
 import { createServer } from 'node:http';
 import { resolve } from 'node:path';
+import { readFile } from 'node:fs/promises';
+import { pageMetadata, renderPageHtml } from '../shared/site-metadata.ts';
 import { Server } from 'socket.io';
 import { initPhysics } from '../shared/simulation.ts';
 import type { ServerConfig } from './config.ts';
@@ -27,13 +29,32 @@ export async function createGameServer(config: ServerConfig) {
     closePromise: Promise<void> | undefined;
   let closeFrontend: (() => Promise<void>) | undefined;
   app.disable('x-powered-by');
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api/') || req.path.startsWith('/host/') || req.path === '/join')
+      res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    next();
+  });
   app.set('trust proxy', config.trustProxyHops);
   app.use(express.json({ limit: '4kb' }));
   const broadcast = registerRealtime(io, registry);
   registerHttp(app, config, registry, results, limiter, broadcast, () => closing);
   if (config.production) {
-    app.use(express.static(resolve(config.rootDir, 'dist')));
-    app.get('/{*path}', (_req, res) => res.sendFile(resolve(config.rootDir, 'dist/index.html')));
+    const frontend = resolve(config.rootDir, 'dist');
+    let indexHtml: Promise<string> | undefined;
+    app.use(express.static(frontend, { index: false }));
+    app.get('/{*path}', async (req, res, next) => {
+      try {
+        indexHtml ??= readFile(resolve(frontend, 'index.html'), 'utf8');
+        const meta = pageMetadata(req.path);
+        res.setHeader('X-Robots-Tag', meta.robots);
+        res
+          .status(meta.page === 'missing' ? 404 : 200)
+          .type('html')
+          .send(renderPageHtml(await indexHtml, req.path, config.publicUrl));
+      } catch (error) {
+        next(error);
+      }
+    });
   } else {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({

@@ -4,6 +4,8 @@ Browser-based party racing for **2–8 players**. Share one screen on a computer
 
 **[Play now → turborumble.rastwork.pl](https://turborumble.rastwork.pl/)**
 
+![Turbo Rumble gameplay: an eight-car race on Sundown Junction with items and live standings](docs/gameplay.png)
+
 Create a room on the shared screen, then scan its QR code or enter the room code on each phone. The hosted game works across different networks.
 
 ## Run locally

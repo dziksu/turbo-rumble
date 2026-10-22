@@ -8,6 +8,7 @@ import {
 } from './i18n/messages.ts';
 import type { Snapshot, Weapon } from '../shared/types.ts';
 import { WEAPONS } from '../shared/types.ts';
+import { pageMetadata } from '../shared/site-metadata.ts';
 
 const STORAGE_KEY = 'turbo:language';
 let language: Language = 'en';
@@ -27,17 +28,23 @@ export function onLanguageChange(listener: () => void) {
   };
 }
 function updateDocument() {
+  const meta = pageMetadata(location.pathname, language);
   document.documentElement.lang = language;
-  document.title = t('Gaz. Chaos. Rewanż.') + ' — Turbo Rumble';
-  document
-    .querySelector('meta[name="description"]')
-    ?.setAttribute(
-      'content',
-      language === 'en'
-        ? 'Turbo Rumble — one shared screen, phones as controllers. Race, fire rockets and survive the mayhem.'
-        : 'Turbo Rumble — wspólny ekran, telefony jako pady. Wyścigi, rakiety i walka o przetrwanie.',
-    );
+  document.title = meta.title;
+  for (const [selector, content] of [
+    ['meta[name="description"]', meta.description],
+    ['meta[property="og:title"]', meta.title],
+    ['meta[property="og:description"]', meta.description],
+    ['meta[property="og:locale"]', meta.locale],
+    ['meta[property="og:locale:alternate"]', language === 'en' ? 'pl_PL' : 'en_US'],
+    ['meta[property="og:image:alt"]', meta.imageAlt],
+    ['meta[name="twitter:title"]', meta.title],
+    ['meta[name="twitter:description"]', meta.description],
+    ['meta[name="twitter:image:alt"]', meta.imageAlt],
+  ])
+    document.querySelector(selector!)?.setAttribute('content', content!);
 }
+
 export function setLanguage(next: Language) {
   if (next === language) return;
   language = next;

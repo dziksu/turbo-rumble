@@ -4,8 +4,8 @@ export const EN = {
   '— autorski kod gry do użytku niekomercyjnego. Zewnętrzne zasoby zachowują własne licencje.':
     '— original game code for noncommercial use. Third-party assets retain their own licenses.',
 
-  'Zamień telefon w pad. Skacz, dryfuj i zrób rozróbę ze znajomymi.':
-    'Turn your phone into a controller. Jump, drift and cause mayhem with your friends.',
+  'Darmowe wyścigi w przeglądarce dla 2–8 graczy. Zamień telefon w pad.':
+    'Free browser racing for 2–8 friends. One screen. Phones as controllers.',
   'Ekipa już czeka?': 'Crew already waiting?',
   'Sceny w tle': 'Background scenes',
   'FILMOWE SCENY': 'CINEMATIC SCENES',
