@@ -8,6 +8,7 @@ import {
   bindTranslations,
   translateMessage,
 } from '../i18n.ts';
+import { lobbyReadiness, playerReadiness } from '../lobby-readiness.ts';
 import { rankStandings } from '../standings.ts';
 import { waitingForSummary } from '../race-presentation.ts';
 import { resultsPodium } from '../results.ts';
@@ -115,6 +116,13 @@ export async function hostPage(code: string) {
           </p>
           <div class="players-heading">
             <b>NA LINII STARTU</b><span id="player-count">0 / 8</span>
+            <strong
+              id="lobby-ready-count"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+            ></strong>
+            <div class="ready-progress" aria-hidden="true"><span></span></div>
           </div>
           <div id="lobby-players" class="lobby-players"></div>
           <div class="lobby-tools">
@@ -258,9 +266,23 @@ function renderHost(state: Snapshot | null) {
   const rankedCars = rankStandings(state.cars);
   if (lobby) {
     $('#player-count').textContent = `${state.cars.length} / 8`;
+    const readiness = lobbyReadiness(state.cars);
+    const readyCount = $('#lobby-ready-count');
+    const readyText = t('Gotowi: {ready}/{total}', readiness);
+    if (readyCount.textContent !== readyText) readyCount.textContent = readyText;
+    readyCount.dataset.complete = String(
+      readiness.total > 0 && readiness.ready === readiness.total,
+    );
+    $('.ready-progress').style.setProperty(
+      '--ready-progress',
+      `${readiness.total ? (readiness.ready / readiness.total) * 100 : 0}%`,
+    );
     const list = $('#lobby-players');
     const signature = state.cars
-      .map((c) => `${getLanguage()}:${c.id}:${c.ready}:${c.connected}:${c.name}:${state.adminId}`)
+      .map(
+        (c) =>
+          `${getLanguage()}:${c.id}:${c.ready}:${c.connected}:${c.bot}:${c.name}:${state.adminId}`,
+      )
       .join('|');
     if (list.dataset.signature !== signature) {
       list.dataset.signature = signature;
@@ -268,23 +290,29 @@ function renderHost(state: Snapshot | null) {
       for (const c of state.cars) {
         const row = document.createElement('div');
         row.className = 'lobby-player';
+        row.dataset.readiness = playerReadiness(c);
         const badge = document.createElement('span');
         badge.className = 'player-avatar';
         badge.style.background = c.color;
         badge.textContent = String(c.slot + 1);
         const name = document.createElement('b');
         name.textContent = c.name;
+        if (state.adminId === c.id) {
+          const admin = document.createElement('span');
+          admin.className = 'lobby-admin';
+          admin.textContent = 'ADMIN';
+          name.append(admin);
+        }
         name.title = c.name + (state.adminId === c.id ? ' · ADMIN' : '');
         const status = document.createElement('small');
         status.textContent = c.bot
-          ? 'BOT'
+          ? t('✓ BOT')
           : !c.connected
-            ? t('ŁĄCZENIE')
+            ? t('! BRAK POŁĄCZENIA')
             : c.ready
-              ? t('GOTOWY')
-              : t('CZEKA');
-        if (state.adminId === c.id) status.textContent = 'ADMIN · ' + status.textContent;
-        status.className = c.ready && c.connected ? 'ready-text' : '';
+              ? t('✓ GOTOWY')
+              : t('○ NIE GOTOWY');
+        status.className = 'lobby-ready-badge';
         const remove = document.createElement('button');
         remove.textContent = '×';
         remove.className = 'remove-player';
@@ -306,7 +334,7 @@ function renderHost(state: Snapshot | null) {
       ? t('Wszyscy gotowi — automatyczny start za 5 sekund.')
       : state.cars.length < 2
         ? t('Pierwszy gracz jest adminem. Wszyscy gotowi? Start za 5 sekund.')
-        : t('Czekamy na gotowość wszystkich telefonów.');
+        : t('Potwierdź gotowość na swoim padzie lub klawiaturze.');
     $<HTMLButtonElement>('#add-bot').disabled = state.cars.length >= 8;
     const keyboard = state.cars.find((car) => car.id === keyboardId);
     $<HTMLButtonElement>('#add-keyboard').disabled = !keyboard && state.cars.length >= 8;

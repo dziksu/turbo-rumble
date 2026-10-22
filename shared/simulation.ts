@@ -296,6 +296,11 @@ export class Race {
       this.carBodies.delete(c.body.handle);
       this.world.removeRigidBody(c.body);
       this.cars.delete(id);
+      this.pendingDeaths.delete(id);
+      this.deaths = this.deaths
+        .map((group) => group.filter((driver) => driver !== id))
+        .filter((group) => group.length);
+      this.lastCollision.delete(id);
     }
   }
   setConnected(id: string, connected: boolean) {

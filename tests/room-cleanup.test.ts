@@ -230,3 +230,236 @@ test(
     }
   },
 );
+
+test('offline players expire at 30 seconds, free full-room slots and nominate only a connected human', (t) => {
+  const { config, registry, broadcast } = runtimeFixture(t);
+  assert.equal(config.playerReconnectMs, 30_000);
+  const { room } = registry.create();
+  room.emptySince = null;
+  for (let i = 0; i < 5; i++) registry.command(room, { action: 'bot' });
+  const absent = registry.join(room.code, 'Absent admin').session;
+  room.playerSockets.set(absent.playerId!, 'first');
+  registry.playerConnected(room, absent.playerId!);
+  const never = registry.join(room.code, 'Never connected').session;
+  const online = registry.join(room.code, 'Connected successor').session;
+  room.playerSockets.set(online.playerId!, 'online');
+  registry.playerConnected(room, online.playerId!);
+  room.playerSockets.delete(absent.playerId!);
+  registry.playerDisconnected(room, absent.playerId!);
+  const vehicle = t.mock.method(room.race.cars.get(absent.playerId!)!.vehicle, 'dispose');
+  assert.equal(room.race.cars.size, 8);
+  t.mock.timers.tick(29_999);
+  assert.equal(room.race.adminId, absent.playerId);
+  assert.equal(room.race.cars.size, 8);
+  t.mock.timers.tick(1);
+  assert.equal(room.race.cars.size, 6);
+  assert.equal(room.race.adminId, online.playerId);
+  assert.equal(room.race.cars.get(online.playerId!)!.bot, false);
+  assert.equal(registry.authenticate(absent), null);
+  assert.equal(registry.authenticate(never), null);
+  assert.equal(vehicle.mock.callCount(), 1);
+  assert.equal(room.disconnectedSince.size, 0);
+  assert.ok(broadcast.mock.callCount() > 0, 'removal and admin change are broadcast immediately');
+  registry.join(room.code, 'Replacement 1');
+  registry.join(room.code, 'Replacement 2');
+  assert.equal(room.race.cars.size, 8, 'both expired slots can be reused');
+});
+
+test('reconnect cancels expiration and another disconnect starts a fresh 30-second window', (t) => {
+  const { registry } = runtimeFixture(t);
+  const { room } = registry.create();
+  room.emptySince = null;
+  const player = registry.join(room.code, 'Returning admin').session;
+  room.playerSockets.set(player.playerId!, 'first');
+  registry.playerConnected(room, player.playerId!);
+  room.playerSockets.delete(player.playerId!);
+  registry.playerDisconnected(room, player.playerId!);
+  t.mock.timers.tick(29_999);
+  room.playerSockets.set(player.playerId!, 'returned');
+  registry.playerConnected(room, player.playerId!);
+  t.mock.timers.tick(1);
+  assert.ok(room.race.cars.has(player.playerId!));
+  assert.equal(room.race.adminId, player.playerId);
+  assert.equal(room.disconnectedSince.size, 0);
+  room.playerSockets.delete(player.playerId!);
+  registry.playerDisconnected(room, player.playerId!);
+  t.mock.timers.tick(29_999);
+  assert.ok(room.race.cars.has(player.playerId!));
+  t.mock.timers.tick(1);
+  assert.equal(room.race.cars.has(player.playerId!), false);
+  assert.equal(room.race.adminId, null);
+});
+
+test('empty paused rooms still expire humans without stepping physics or promoting bots', (t) => {
+  const { registry } = runtimeFixture(t);
+  const { room } = registry.create();
+  registry.command(room, { action: 'bot' });
+  const player = registry.join(room.code, 'Offline').session;
+  room.playerSockets.set(player.playerId!, 'admin');
+  registry.playerConnected(room, player.playerId!);
+  room.playerSockets.delete(player.playerId!);
+  registry.playerDisconnected(room, player.playerId!);
+  room.race.phase = 'paused';
+  const step = t.mock.method(room.race, 'step');
+  t.mock.timers.tick(30_000);
+  assert.equal(step.mock.callCount(), 0);
+  assert.equal(room.race.adminId, null);
+  assert.equal(room.race.cars.size, 1);
+  assert.equal([...room.race.cars.values()][0].bot, true);
+  assert.equal(registry.authenticate(player), null);
+  room.race.lobby();
+  const newcomer = registry.join(room.code, 'New admin').session;
+  assert.equal(room.race.adminId, null);
+  room.playerSockets.set(newcomer.playerId!, 'new');
+  registry.playerConnected(room, newcomer.playerId!);
+  assert.equal(room.race.adminId, newcomer.playerId);
+});
+
+test('map changes do not restart a disconnected player deadline, and race removal clears scoring queues', (t) => {
+  const { registry } = runtimeFixture(t);
+  const { room } = registry.create();
+  room.emptySince = null;
+  const absent = registry.join(room.code, 'Departing').session;
+  room.playerSockets.set(absent.playerId!, 'departing');
+  registry.playerConnected(room, absent.playerId!);
+  room.playerSockets.delete(absent.playerId!);
+  registry.playerDisconnected(room, absent.playerId!);
+  const online = registry.join(room.code, 'Remaining').session;
+  room.playerSockets.set(online.playerId!, 'remaining');
+  registry.playerConnected(room, online.playerId!);
+  registry.command(room, { action: 'bot' });
+  const since = room.disconnectedSince.get(absent.playerId!);
+  t.mock.timers.tick(5000);
+  registry.command(room, {
+    action: 'settings',
+    settings: { mapId: 'forest', lapLimit: 3, winningScore: 10 },
+  });
+  assert.equal(room.disconnectedSince.get(absent.playerId!), since);
+  t.mock.timers.tick(24_999);
+  assert.ok(room.race.cars.has(absent.playerId!));
+  // Expire during a real race after the car has entered both elimination queues.
+  room.race.phase = 'racing';
+  room.race.deaths = [[absent.playerId!]];
+  room.race.pendingDeaths.set(absent.playerId!, 'test');
+  room.race.lastCollision.set(absent.playerId!, room.race.tick);
+  t.mock.timers.tick(1);
+  assert.equal(room.race.cars.has(absent.playerId!), false);
+  assert.equal(room.race.pendingDeaths.has(absent.playerId!), false);
+  assert.ok(room.race.deaths.every((group) => !group.includes(absent.playerId!)));
+  assert.equal(room.race.lastCollision.has(absent.playerId!), false);
+  assert.doesNotThrow(() => room.race.endSegment(true));
+  assert.ok(room.race.results.every((result) => result.id !== absent.playerId));
+  const finished = room.race.results;
+  room.playerSockets.delete(online.playerId!);
+  registry.playerDisconnected(room, online.playerId!);
+  t.mock.timers.tick(30_000);
+  assert.equal(room.race.cars.has(online.playerId!), false);
+  assert.deepEqual(
+    room.race.results,
+    finished,
+    'completed results survive later player expiration',
+  );
+});
+
+test('authentication enforces the deadline before the next runtime tick', (t) => {
+  t.mock.timers.enable({ apis: ['Date'], now: 1000 });
+  const registry = new RoomRegistry();
+  t.after(() => registry.disposeAll());
+  const { room } = registry.create();
+  const player = registry.join(room.code, 'No socket').session;
+  t.mock.timers.tick(29_999);
+  assert.ok(registry.authenticate(player));
+  t.mock.timers.tick(1);
+  assert.equal(registry.authenticate(player), null);
+  assert.equal(room.race.cars.size, 0);
+});
+
+test(
+  'real sockets: reconnect and takeover preserve the admin; expiry revokes tokens and grants the role to a human',
+  { timeout: 15_000 },
+  async () => {
+    const folder = mkdtempSync(join(tmpdir(), 'turbo-player-expiry-'));
+    const config = {
+      ...loadConfig({}, []),
+      production: true,
+      host: '127.0.0.1',
+      port: 0,
+      dataDir: folder,
+      playerReconnectMs: 1000,
+    };
+    const server = await createGameServer(config);
+    const sockets: GameSocket[] = [];
+    try {
+      const base = `http://127.0.0.1:${await server.listen()}`;
+      const post = async (path: string, body: object) => {
+        const response = await fetch(base + path, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        assert.ok(response.ok);
+        return (await response.json()) as Session;
+      };
+      const connect = async (session: Session) => {
+        const socket: GameSocket = io(base, {
+          auth: session,
+          autoConnect: false,
+          reconnection: false,
+          transports: ['websocket'],
+        });
+        sockets.push(socket);
+        await new Promise<void>((resolve, reject) => {
+          socket.once('connect', resolve);
+          socket.once('connect_error', reject);
+          socket.connect();
+        });
+        return socket;
+      };
+      const hostSession = await post('/api/rooms', {});
+      const host = await connect(hostSession);
+      const room = server.registry.rooms.get(hostSession.code)!;
+      await host.timeout(1500).emitWithAck('host', { action: 'bot' });
+      const first = await post('/api/join', { code: room.code, name: 'Original admin' });
+      const firstSocket = await connect(first);
+      const second = await post('/api/join', { code: room.code, name: 'Human successor' });
+      const successor = await connect(second);
+      assert.equal(room.race.adminId, first.playerId);
+      firstSocket.disconnect();
+      await waitFor(() => room.disconnectedSince.has(first.playerId!));
+      const returned = await connect(first);
+      assert.equal(room.disconnectedSince.has(first.playerId!), false);
+      assert.equal(room.race.adminId, first.playerId);
+      const replacement = await connect(first);
+      await waitFor(() => !returned.connected);
+      assert.equal(
+        room.disconnectedSince.has(first.playerId!),
+        false,
+        'superseded socket never starts an expiry timer',
+      );
+      replacement.disconnect();
+      await waitFor(() => room.disconnectedSince.has(first.playerId!));
+      assert.ok(room.race.cars.has(first.playerId!));
+      await waitFor(() => !room.race.cars.has(first.playerId!), 2500);
+      assert.equal(room.race.adminId, second.playerId);
+      assert.equal(room.players.has(first.token), false);
+      await assert.rejects(connect(first), /sesja|wygasł/);
+      assert.equal(
+        (await successor.timeout(1500).emitWithAck('host', { action: 'bot' })).ok,
+        true,
+        'successor has actual admin permission',
+      );
+      successor.disconnect();
+      await waitFor(() => !room.race.cars.has(second.playerId!), 2500);
+      assert.equal(room.race.adminId, null, 'bots never inherit administration');
+      assert.ok([...room.race.cars.values()].every((car) => car.bot));
+      const newcomer = await post('/api/join', { code: room.code, name: 'New human' });
+      assert.equal(room.race.adminId, null, 'HTTP-only join does not claim administration');
+      await connect(newcomer);
+      assert.equal(room.race.adminId, newcomer.playerId);
+    } finally {
+      for (const socket of sockets) socket.disconnect();
+      await server.close();
+      rmSync(folder, { recursive: true, force: true });
+    }
+  },
+);

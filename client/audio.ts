@@ -248,7 +248,7 @@ export class Sound {
   enabled = true;
   volume = 0.65;
   musicEnabled = true;
-  musicVolume = 0.28;
+  musicVolume = 0.08;
   master: GainNode | null = null;
   music: MusicLoop | null = null;
   onChange = () => {};

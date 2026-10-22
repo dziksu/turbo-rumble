@@ -11,6 +11,7 @@ export interface ServerConfig {
   maxRooms: number;
   roomTtlMs: number;
   hostReconnectMs: number;
+  playerReconnectMs: number;
 }
 function integer(env: NodeJS.ProcessEnv, key: string, fallback: number, min: number, max: number) {
   const raw = env[key];
@@ -50,5 +51,6 @@ export function loadConfig(
     maxRooms: integer(env, 'MAX_ROOMS', 50, 1, 500),
     roomTtlMs: 3 * 60_000,
     hostReconnectMs: 30_000,
+    playerReconnectMs: 30_000,
   };
 }

@@ -6,8 +6,10 @@ import {
   raceMessage,
   translateMessage,
 } from '../i18n.ts';
+import { lobbyReadiness } from '../lobby-readiness.ts';
 import { roomSettings } from '../room-settings.ts';
-import { waitingForSummary } from '../race-presentation.ts';
+import { controllerLobbyMode, waitingForSummary } from '../race-presentation.ts';
+import '../controller-lobby.css';
 import { app, $, logo, toast } from '../core/dom.ts';
 import { connectGame, createInput } from '../core/network.ts';
 import { type Session, type Snapshot } from '../../shared/types.ts';
@@ -28,11 +30,22 @@ export function controller(session: Session) {
       <span class="pad-score" id="pad-score">5 <small>PKT</small></span>
     </section>
     <div class="pad-status">
-      <span id="pad-status-text">Łączę z hostem…</span
-      ><button class="button primary" id="ready-button">Jestem gotowy <span>✓</span></button>
+      <div class="pad-status-copy">
+        <strong
+          id="pad-ready-count"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          hidden
+        ></strong>
+        <span id="pad-status-text">Łączę z hostem…</span>
+      </div>
+      <button class="button primary" id="ready-button" hidden disabled>
+        Jestem gotowy <span>✓</span>
+      </button>
     </div>
     <section id="pad-settings"></section>
-    <main class="pad-controls">
+    <main class="pad-controls" id="pad-controls">
       <section class="direction-controls">
         <button class="pad-key left-key" id="left-control" aria-label="Skręć w lewo">
           <span>←</span><small>LEWO</small></button
@@ -59,7 +72,8 @@ export function controller(session: Session) {
   const socket = connectGame(session),
     input = createInput(socket);
   const updateSettings = roomSettings($('#pad-settings'), socket, { playerId: session.playerId! });
-  let ready = false,
+  let readyPending = false,
+    ready = false,
     latest: Snapshot | null = null,
     dead = false;
   const pointers = new Map<number, 'left' | 'right'>();
@@ -113,9 +127,24 @@ export function controller(session: Session) {
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) reset();
   });
-  $('#ready-button').onclick = () => {
-    ready = !ready;
-    socket.emit('ready', ready);
+  $('#ready-button').onclick = async () => {
+    if (
+      !socket.connected ||
+      readyPending ||
+      !latest ||
+      !(controllerLobbyMode(latest) || latest.phase === 'countdown')
+    )
+      return;
+    readyPending = true;
+    $<HTMLButtonElement>('#ready-button').disabled = true;
+    try {
+      await socket.timeout(3000).emitWithAck('ready', !ready);
+    } catch {
+      toast('Nie udało się potwierdzić gotowości. Spróbuj ponownie.');
+    } finally {
+      readyPending = false;
+      $<HTMLButtonElement>('#ready-button').disabled = !socket.connected;
+    }
   };
   $('#pad-rejoin').onclick = () => {
     localStorage.removeItem('turbo:player:' + session.code);
@@ -132,6 +161,7 @@ export function controller(session: Session) {
     $('#pad-connection').textContent =
       reason === 'io server disconnect' ? t('Pad odłączony') : t('Łączenie ponownie…');
     $('#pad-connection').classList.remove('online');
+    $<HTMLButtonElement>('#ready-button').disabled = true;
     reset();
     if (reason === 'io server disconnect')
       toast('Pad został odłączony przez hosta lub otwarty w innym oknie.');
@@ -151,10 +181,20 @@ export function controller(session: Session) {
     $('#pad-score').innerHTML = `${car.score} <small>${t('PKT')}</small>`;
     ready = car.ready;
     const summaryPending = waitingForSummary(state);
-    const inLobby = state.phase === 'lobby' || (state.phase === 'finished' && !summaryPending);
+    const inLobby = controllerLobbyMode(state);
+    $('.pad-shell').dataset.lobby = String(inLobby);
+    $('.pad-shell').dataset.phase = state.phase;
+    $('#pad-controls').hidden = inLobby;
     const mayReady = inLobby || state.phase === 'countdown';
     $('#ready-button').hidden = !mayReady;
-    $('#ready-button').textContent = ready ? t('Gotowy! ✓') : t('Jestem gotowy ✓');
+    $<HTMLButtonElement>('#ready-button').disabled = readyPending || !socket.connected;
+    $('#ready-button').textContent = ready ? t('✓ Gotowy · cofnij') : t('Jestem gotowy ✓');
+    $('#ready-button').setAttribute('aria-pressed', String(ready));
+    const readiness = lobbyReadiness(state.cars);
+    const readyCount = $('#pad-ready-count');
+    readyCount.hidden = !mayReady;
+    const readyText = t('Gotowi: {ready}/{total}', readiness);
+    if (readyCount.textContent !== readyText) readyCount.textContent = readyText;
     $('#ready-button').classList.toggle('is-ready', ready);
     $('#pad-status-text').textContent = summaryPending
       ? t('RUNDA {round} ZAKOŃCZONA', { round: state.round })
@@ -162,8 +202,8 @@ export function controller(session: Session) {
         ? state.phase === 'finished'
           ? raceMessage(state)
           : ready
-            ? t('Czekamy na gotowość całej ekipy.')
-            : t('Potwierdź gotowość i spójrz na duży ekran.')
+            ? t('✓ Gotowy. Czekamy na ekipę.')
+            : t('○ Nie gotowy. Potwierdź przyciskiem.')
         : state.phase === 'paused'
           ? t('Pauza — czekamy na ekran hosta.')
           : state.phase === 'segment'

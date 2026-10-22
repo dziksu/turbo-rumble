@@ -10,6 +10,7 @@ export interface Room {
   race: Race;
   players: Map<string, string>;
   playerSockets: Map<string, string>;
+  disconnectedSince: Map<string, number>;
   hosts: Set<string>;
   emptySince: number | null;
   hostLost: number;
@@ -39,7 +40,10 @@ export class RoomError extends Error {
 }
 export class RoomRegistry {
   readonly rooms = new Map<string, Room>();
-  constructor(private readonly maxRooms = 50) {}
+  constructor(
+    private readonly maxRooms = 50,
+    private readonly playerReconnectMs = 30_000,
+  ) {}
   stats(): ServerStats {
     let players = 0,
       activeRooms = 0;
@@ -65,6 +69,7 @@ export class RoomRegistry {
       race: new Race(randomBytes(4).readUInt32LE()),
       players: new Map(),
       playerSockets: new Map(),
+      disconnectedSince: new Map(),
       hosts: new Set(),
       emptySince: Date.now(),
       hostLost: 0,
@@ -77,6 +82,7 @@ export class RoomRegistry {
   join(code: string, name: string): { room: Room; session: Session } {
     const room = this.rooms.get(code);
     if (!room) throw new RoomError('Nie ma takiego pokoju. Sprawdź kod na ekranie hosta.', 404);
+    this.expireDisconnected(room);
     if (!['lobby', 'finished', 'countdown'].includes(room.race.phase))
       throw new RoomError('Wyścig już trwa. Dołącz, gdy host wróci do lobby.', 409);
     if (room.race.cars.size >= MAX_PLAYERS)
@@ -94,16 +100,58 @@ export class RoomRegistry {
       wins: 0,
     });
     room.players.set(key, id);
-    room.race.adminId ??= id;
+    room.disconnectedSince.set(id, Date.now());
     return { room, session: { code, token: key, playerId: id, role: 'player' } };
   }
   authenticate(session: Session) {
     const room = this.rooms.get(session.code);
     if (!room) return null;
+    this.expireDisconnected(room);
     if (session.role === 'host' && session.token === room.hostToken)
       return { room, host: true, playerId: undefined };
     const playerId = session.role === 'player' ? room.players.get(session.token) : undefined;
     return playerId ? { room, host: false, playerId } : null;
+  }
+  playerConnected(room: Room, id: string) {
+    room.disconnectedSince.delete(id);
+    room.race.setConnected(id, true);
+    this.nominateAdmin(room);
+  }
+  playerDisconnected(room: Room, id: string) {
+    room.race.setConnected(id, false);
+    const car = room.race.cars.get(id);
+    if (car && !car.bot) room.disconnectedSince.set(id, Date.now());
+  }
+  expireDisconnected(room: Room, now = Date.now()) {
+    let removed = false;
+    for (const [id, since] of room.disconnectedSince) {
+      const car = room.race.cars.get(id);
+      if (!car || car.bot || car.connected || room.playerSockets.has(id)) {
+        room.disconnectedSince.delete(id);
+        continue;
+      }
+      if (now - since < this.playerReconnectMs) continue;
+      this.removePlayer(room, id);
+      removed = true;
+    }
+    if (removed) this.syncLobby(room);
+    return removed;
+  }
+  private nominateAdmin(room: Room) {
+    room.race.adminId ??=
+      [...room.race.cars.values()].find(
+        (car) => !car.bot && car.connected && room.playerSockets.has(car.id),
+      )?.id ?? null;
+  }
+  private removePlayer(room: Room, id: string) {
+    const socket = room.playerSockets.get(id);
+    room.race.removeDriver(id);
+    room.playerSockets.delete(id);
+    room.disconnectedSince.delete(id);
+    for (const [key, playerId] of room.players) if (playerId === id) room.players.delete(key);
+    if (room.race.adminId === id) room.race.adminId = null;
+    this.nominateAdmin(room);
+    return socket;
   }
   command(room: Room, command: HostCommand): string | undefined {
     let removedSocket: string | undefined;
@@ -152,12 +200,7 @@ export class RoomRegistry {
       }
       case 'remove':
         this.requireLobby(room, 'Graczy usuwasz w lobby.');
-        room.race.removeDriver(command.id);
-        if (room.race.adminId === command.id)
-          room.race.adminId = [...room.race.cars.values()].find((car) => !car.bot)?.id ?? null;
-        removedSocket = room.playerSockets.get(command.id);
-        room.playerSockets.delete(command.id);
-        for (const [key, id] of room.players) if (id === command.id) room.players.delete(key);
+        removedSocket = this.removePlayer(room, command.id);
         break;
     }
     return removedSocket;

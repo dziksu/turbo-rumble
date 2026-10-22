@@ -8,7 +8,7 @@ import {
   ROUND_SUMMARY_TICKS,
   SUMMARY_DELAY_TICKS,
 } from '../shared/rules.ts';
-import { waitingForSummary } from '../client/race-presentation.ts';
+import { controllerLobbyMode, waitingForSummary } from '../client/race-presentation.ts';
 
 before(initPhysics);
 function setup() {
@@ -143,4 +143,12 @@ test('repeated renders and a late reconnect use the same server deadline without
     state.tick = 1200;
     assert.equal(waitingForSummary(state), false);
   }
+});
+
+test('controller configuration stays unavailable during the match and delayed final impact', () => {
+  for (const phase of ['countdown', 'racing', 'segment', 'paused'] as const)
+    assert.equal(controllerLobbyMode({ phase, tick: 100, summaryAt: 0 }), false, phase);
+  assert.equal(controllerLobbyMode({ phase: 'lobby', tick: 100, summaryAt: 0 }), true);
+  assert.equal(controllerLobbyMode({ phase: 'finished', tick: 99, summaryAt: 100 }), false);
+  assert.equal(controllerLobbyMode({ phase: 'finished', tick: 100, summaryAt: 100 }), true);
 });

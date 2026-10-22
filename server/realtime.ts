@@ -55,7 +55,7 @@ export function registerRealtime(io: GameServer, registry: RoomRegistry) {
       room.playerSockets.set(playerId, socket.id);
       if (previous && previous !== socket.id) io.sockets.sockets.get(previous)?.disconnect(true);
       room.race.resetInput(playerId);
-      room.race.setConnected(playerId, true);
+      registry.playerConnected(room, playerId);
     }
     let inputs = 0,
       bucketStarted = Date.now();
@@ -124,7 +124,7 @@ export function registerRealtime(io: GameServer, registry: RoomRegistry) {
         }
       } else if (playerId && ownsController()) {
         room.playerSockets.delete(playerId);
-        room.race.setConnected(playerId, false);
+        registry.playerDisconnected(room, playerId);
       }
       if (!io.sockets.adapter.rooms.get(room.code)?.size) room.emptySince ??= Date.now();
       registry.syncLobby(room);

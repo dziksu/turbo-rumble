@@ -1,0 +1,308 @@
+/* The lobby has one primary action; race controls appear when the countdown starts. */
+.controller-page .pad-shell[data-lobby='true'] .pad-status {
+  position: static;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-content: stretch;
+  gap: 18px;
+  width: 100%;
+  max-width: 520px;
+  margin: clamp(12px, 4svh, 40px) auto 16px;
+  flex-shrink: 0;
+}
+.controller-page .pad-shell[data-lobby='true'] .pad-status-copy {
+  text-align: center;
+  gap: 8px;
+  font-size: 15px;
+}
+.controller-page .pad-shell[data-lobby='true'] #pad-ready-count {
+  font-size: clamp(24px, 4vw, 32px);
+}
+.controller-page #ready-button {
+  width: 100%;
+  min-height: 64px;
+  padding: 16px 24px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #102f23;
+  background: #70e6a7;
+  border: 2px solid #a0f5c7;
+  box-shadow: 0 5px 0 #27764f;
+  border-radius: 14px;
+}
+.controller-page #ready-button.is-ready {
+  background: #bfefd5;
+  border-color: #80d8ab;
+  box-shadow: 0 3px 0 #27764f;
+}
+.controller-page #ready-button:focus-visible,
+.controller-page .pad-config-button:focus-visible {
+  outline: 3px solid #fff5d9;
+  outline-offset: 5px;
+}
+.controller-page #pad-settings {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto 20px;
+  flex-shrink: 0;
+}
+.controller-page .pad-config-button {
+  width: 100%;
+  min-height: 52px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  color: #f4efdf;
+  background: #293e4d;
+  border: 1px solid #72818b;
+  box-shadow: none;
+  border-radius: 12px;
+  font-size: 16px;
+}
+.controller-page .pad-shell[data-lobby='true'] .pad-footer {
+  margin-top: auto;
+}
+.controller-settings-dialog {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100svh;
+  max-height: 100svh;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: #fff8eb;
+  color: #192b38;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  text-align: left;
+}
+.controller-settings-dialog::backdrop {
+  background: #121e2c;
+}
+.controller-settings-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: max(16px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) 16px
+    max(20px, env(safe-area-inset-left));
+  background: #fff8eb;
+  border-bottom: 1px solid #192b3826;
+}
+.controller-settings-header > div {
+  min-width: 0;
+}
+.controller-settings-header #admin-badge {
+  float: none;
+  font-size: 11px;
+  font-weight: 700;
+  color: #52634f;
+  letter-spacing: 1px;
+}
+.controller-settings-header h2 {
+  margin: 3px 0 0;
+  font-size: clamp(21px, 4vw, 30px);
+  line-height: 1.2;
+}
+.controller-settings-header #close-settings {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  background: #e9e3d6;
+  color: #192b38;
+  border: 1px solid #b7b9aa;
+  border-radius: 12px;
+  font-size: 30px;
+}
+.controller-settings-content {
+  width: min(100%, 960px);
+  margin: auto;
+  padding: 20px max(20px, env(safe-area-inset-right)) max(30px, env(safe-area-inset-bottom))
+    max(20px, env(safe-area-inset-left));
+}
+#settings-dialog-help {
+  margin: 0 0 24px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #52634f;
+}
+.controller-settings-dialog .setup-section-heading {
+  font-size: 13px;
+}
+.controller-settings-dialog .setup-section-heading small {
+  font-size: 11px;
+}
+.controller-settings-dialog .map-caption b {
+  font-size: 16px;
+}
+.controller-settings-dialog .map-caption > span {
+  font-size: 13px;
+}
+.controller-settings-dialog .setup-rule > span:first-child {
+  font-size: 14px;
+}
+.controller-settings-dialog .rule-control input,
+.controller-settings-dialog .rule-control select {
+  height: 44px;
+  font-size: 28px;
+}
+.controller-settings-dialog .setup-sync,
+.controller-settings-dialog .setup-footer p {
+  font-size: 13px;
+}
+.controller-bots {
+  border-top: 1px solid #192b3826;
+  margin-top: 24px;
+  padding-top: 22px;
+}
+.settings-bots-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.settings-bots-heading h3 {
+  margin: 0;
+  font-size: 20px;
+}
+.controller-settings-dialog .button {
+  min-height: 48px;
+  padding: 10px 16px;
+  font-size: 15px;
+  box-shadow: none;
+}
+#settings-bots-count,
+.settings-bots-empty {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #52634f;
+}
+#settings-bot-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.settings-bot-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid #d0d3c7;
+  background: #f2f0e7;
+  border-radius: 12px;
+}
+.settings-bot-avatar {
+  width: 32px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  flex-shrink: 0;
+  font-weight: 700;
+}
+.settings-bot-row b {
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
+  font-size: 15px;
+}
+.controller-settings-dialog .remove-bot-button {
+  background: #f8dfd5;
+  color: #862e20;
+  border: 1px solid #d5a48e;
+  flex-shrink: 0;
+}
+.controller-settings-dialog .settings-admin-tools {
+  padding: 0;
+  margin-top: 20px;
+}
+@media (max-width: 600px) {
+  .controller-settings-dialog .map-options,
+  #settings-bot-list {
+    grid-template-columns: 1fr;
+  }
+  .controller-settings-dialog .map-option {
+    display: grid;
+    grid-template-columns: 104px minmax(0, 1fr);
+  }
+  .controller-settings-dialog .map-image {
+    height: 100%;
+    aspect-ratio: auto;
+  }
+  .controller-settings-dialog .map-caption {
+    padding: 12px;
+  }
+  .controller-settings-dialog .map-number {
+    left: 5px;
+    top: 5px;
+    padding: 3px;
+  }
+  .controller-settings-dialog .map-selected-check {
+    top: auto;
+    bottom: 5px;
+    right: 5px;
+    width: 20px;
+    height: 20px;
+  }
+  .controller-settings-dialog .setup-rule {
+    padding: 12px;
+  }
+  .controller-settings-dialog .rule-control {
+    gap: 5px;
+  }
+  .controller-settings-dialog .rule-control input,
+  .controller-settings-dialog .rule-control select {
+    width: 52px;
+  }
+  .controller-settings-dialog .rule-control small {
+    font-size: 9px;
+    letter-spacing: 0;
+  }
+}
+@media (orientation: landscape) and (max-height: 550px) {
+  .controller-page .pad-shell[data-lobby='true'] .pad-status {
+    grid-template-columns: minmax(0, 1fr) minmax(200px, 1fr);
+    align-items: center;
+    max-width: 720px;
+    margin-top: 12px;
+    gap: 20px;
+  }
+  .controller-page #ready-button {
+    min-height: 48px;
+    padding: 10px 16px;
+    font-size: 17px;
+  }
+  .controller-page .pad-shell[data-lobby='true'] .pad-identity > div {
+    max-width: none;
+  }
+}
+
+.controller-page .pad-config-button > span {
+  margin-left: 0;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.controller-page .brand-wordmark {
+  filter: brightness(0) invert(1);
+  opacity: 0.9;
+}
+.controller-page .pad-shell[data-lobby='false'] #ready-button {
+  width: auto;
+  min-height: 48px;
+  padding: 10px 14px;
+  font-size: 16px;
+}
+#settings-feedback {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #912d22;
+}

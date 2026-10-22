@@ -45,10 +45,6 @@ export async function joinPage() {
           <p id="join-error" class="form-error" role="alert"></p>
           <button class="button primary" type="submit">Zajmij miejsce <span>→</span></button>
         </form>
-        <p class="join-footnote">
-          Telefon i host powinny być w tej samej sieci Wi-Fi.<br />Przy publicznym adresie mogą być
-          w różnych sieciach.
-        </p>
       </section>
     </main>`;
   mountLanguageSwitch(app);

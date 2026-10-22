@@ -112,6 +112,21 @@ test('host and first human configure shared settings; ready auto-starts, cancels
     const secondSession = await post('/api/join', { code: room.code, name: 'Guest' }),
       guest = await connect(secondSession);
     assert.equal(room.race.snapshot(room.code).adminId, firstSession.playerId);
+    const originalBot = [...room.race.cars.values()].find((car) => car.bot)!;
+    assert.equal(
+      (await guest.timeout(1500).emitWithAck('host', { action: 'remove', id: originalBot.id })).ok,
+      false,
+      'a guest cannot remove bots',
+    );
+    assert.ok(room.race.cars.has(originalBot.id));
+    assert.equal(
+      (await admin.timeout(1500).emitWithAck('host', { action: 'remove', id: originalBot.id })).ok,
+      true,
+      'the current phone administrator can remove a bot',
+    );
+    assert.equal(room.race.cars.has(originalBot.id), false);
+    assert.equal((await admin.timeout(1500).emitWithAck('host', { action: 'bot' })).ok, true);
+    assert.equal(room.race.cars.size, 3, 'the phone administrator can add a replacement bot');
     const settings = { mapId: 'forest' as const, lapLimit: 2, winningScore: 15 };
     assert.equal(
       (await guest.timeout(1500).emitWithAck('host', { action: 'settings', settings })).ok,
@@ -166,6 +181,13 @@ test('host and first human configure shared settings; ready auto-starts, cancels
       'host cannot change settings during countdown',
     );
     assert.deepEqual(room.race.settings, settings);
+    const countdownBot = [...room.race.cars.values()].find((car) => car.bot)!;
+    assert.equal(
+      (await admin.timeout(1500).emitWithAck('host', { action: 'remove', id: countdownBot.id })).ok,
+      false,
+      'the administrator cannot remove a bot after the countdown begins',
+    );
+    assert.ok(room.race.cars.has(countdownBot.id));
     await host.timeout(1500).emitWithAck('host', { action: 'start' });
     assert.equal(room.race.phaseUntil, deadline, 'duplicate start never restarts the timer');
     await guest.timeout(1500).emitWithAck('ready', false);

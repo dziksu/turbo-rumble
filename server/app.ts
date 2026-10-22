@@ -23,7 +23,7 @@ export async function createGameServer(config: ServerConfig) {
     pingTimeout: 10_000,
   });
   const results = new ResultsStore(config.dataDir),
-    registry = new RoomRegistry(config.maxRooms),
+    registry = new RoomRegistry(config.maxRooms, config.playerReconnectMs),
     limiter = new FixedWindowRateLimit();
   let closing = false,
     closePromise: Promise<void> | undefined;

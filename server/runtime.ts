@@ -30,6 +30,8 @@ export function startRuntime(
   const loop = setInterval(() => {
     const now = Date.now();
     for (const room of registry.rooms.values()) {
+      // Reconnect deadlines use wall time, including paused and otherwise frozen rooms.
+      if (registry.expireDisconnected(room, now)) broadcast(room);
       // Skip every phase, including finished: even a settled race still steps Rapier.
       if (room.emptySince !== null) {
         if (now - room.emptySince >= config.roomTtlMs) registry.dispose(room.code);
