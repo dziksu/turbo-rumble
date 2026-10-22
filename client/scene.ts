@@ -756,7 +756,7 @@ export class GameScene {
       if (v.ring.material instanceof T.MeshBasicMaterial)
         v.ring.material.opacity = c.invulnerable ? 0.35 + Math.sin(time / 65) * 0.25 : 0.8;
       v.model.scale.setScalar(c.alive && c.frozen ? 1 + Math.sin(time / 60) * 0.025 : 1);
-      const active = this.snapshot?.phase === 'racing' && c.alive;
+      const active = this.snapshot?.phase === 'racing' && c.alive && !c.finishPlace;
       const paused = this.snapshot?.phase === 'paused';
       const steer = c.alive && (active || paused) ? (c.steering ?? 0) : 0;
       v.wheels.update(

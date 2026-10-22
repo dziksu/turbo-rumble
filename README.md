@@ -24,6 +24,7 @@ Open **http://localhost:4317**, create a room and scan the QR code with your pho
 - Acceleration is automatic. Steer left or right; press both directions to brake, then keep holding once stopped to reverse. Release to drive forward again.
 - Hold a turn to drift. Collect and use items, stay on the track and keep up with the shared camera.
 - Keyboard: **A/D** or **←/→** to steer, **Space** to use an item, **↓** to brake and hold at a stop to reverse.
+- When two racers remain, time limits are lifted: finish all laps to earn +2 points for first place and +1 for second. Eliminating a rival still ends the round as usual.
 - The host or first player chooses the map and rules. The countdown starts when everyone is ready.
 
 ## Development and hosting

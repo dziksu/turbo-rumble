@@ -69,6 +69,7 @@ export class Race {
   nextEvent = 1;
   raceStart = 0;
   deaths: string[][] = [];
+  private finishOrder: string[] = [];
   pendingDeaths = new Map<string, string>();
   previousPhase: Phase = 'racing';
   lastCollision = new Map<string, number>();
@@ -300,6 +301,7 @@ export class Race {
       this.world.removeRigidBody(c.body);
       this.cars.delete(id);
       this.pendingDeaths.delete(id);
+      this.finishOrder = this.finishOrder.filter((driver) => driver !== id);
       this.deaths = this.deaths
         .map((group) => group.filter((driver) => driver !== id))
         .filter((group) => group.length);
@@ -381,6 +383,7 @@ export class Race {
     this.message = 'Silniki gotowe';
   }
   place(c: Car, s: number) {
+    this.finishOrder = this.finishOrder.filter((id) => id !== c.id);
     const offset = Math.floor(c.slot / 4) * 5 + 5,
       a = this.track.trackAt(s - offset),
       p = a.p.clone().addScaledVector(a.n, ((c.slot % 4) - 1.5) * 2.7);
@@ -557,10 +560,11 @@ export class Race {
   }
   eliminate(id: string, reason: string) {
     const c = this.cars.get(id);
-    if (c?.alive && !this.pendingDeaths.has(id)) this.pendingDeaths.set(id, reason);
+    if (c?.alive && !this.finishOrder.includes(id) && !this.pendingDeaths.has(id))
+      this.pendingDeaths.set(id, reason);
   }
   useWeapon(c: Car): void {
-    weapons.useWeapon(this, c);
+    if (!this.finishOrder.includes(c.id)) weapons.useWeapon(this, c);
   }
   step() {
     if (this.phase === 'paused') return;
@@ -608,10 +612,12 @@ export class Race {
       body.setNextKinematicRotation(pose.rotation);
     }
     const leaderProgress = Math.max(
-      ...[...this.cars.values()].filter((car) => car.alive).map((car) => car.progress),
+      ...[...this.cars.values()]
+        .filter((car) => car.alive && !this.finishOrder.includes(car.id))
+        .map((car) => car.progress),
     );
     for (const c of this.cars.values()) {
-      if (!c.alive) continue;
+      if (!c.alive || this.finishOrder.includes(c.id)) continue;
       const pos = c.body.translation(),
         a = this.track.trackAt(c.progress);
       let left = false,
@@ -676,9 +682,12 @@ export class Race {
     );
     this.world.step();
     this.settleBodies();
+    const finishLine = this.track.TRACK_LENGTH * this.settings.lapLimit;
+    const crossings: { car: Car; fraction: number }[] = [];
     for (const c of this.cars.values())
-      if (c.alive) {
+      if (c.alive && !this.finishOrder.includes(c.id)) {
         const p = c.body.translation(),
+          previousProgress = c.progress,
           pr = this.track.projectOnTrack(p, c.progress);
         const before = beforeStep.get(c.id)!,
           velocity = c.body.linvel(),
@@ -689,6 +698,14 @@ export class Race {
         }
         if (Math.abs(pr.delta) < 3.5 && pr.distance < this.track.trackAt(pr.s).width + 12)
           c.progress += pr.delta;
+        if (c.progress >= finishLine)
+          crossings.push({
+            car: c,
+            fraction:
+              previousProgress >= finishLine
+                ? 0
+                : clamp((finishLine - previousProgress) / (c.progress - previousProgress), 0, 1),
+          });
         if (
           p.y < -0.9 &&
           this.track.isGap(pr.s) &&
@@ -739,19 +756,38 @@ export class Race {
       if (group.length) this.deaths.push(group);
       this.pendingDeaths.clear();
     }
-    const alive = [...this.cars.values()].filter((c) => c.alive),
-      leader = Math.max(...alive.map((c) => c.progress), this.cameraProgress - 15);
+    const alive = [...this.cars.values()].filter((c) => c.alive);
+    const duel = alive.length === 2;
+    if (duel || this.finishOrder.length) {
+      // Resolve same-tick crossings by the fraction of the physics step to the line.
+      for (const { car } of crossings.sort(
+        (a, b) => a.fraction - b.fraction || a.car.slot - b.car.slot,
+      )) {
+        if (!car.alive) continue;
+        this.finishOrder.push(car.id);
+        car.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+        car.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+        car.body.resetForces(true);
+        car.body.setEnabled(false);
+        car.weapon = null;
+        car.boostUntil = car.frostUntil = car.hitUntil = 0;
+        car.catchUp = car.reverseHold = car.steering = car.drift = 0;
+        car.reversing = false;
+        car.invulnerableUntil = Infinity;
+      }
+    }
+    const unfinished = alive.filter((c) => !this.finishOrder.includes(c.id));
+    const leader = Math.max(...unfinished.map((c) => c.progress), this.cameraProgress - 15);
     this.cameraProgress += (leader - 4 - this.cameraProgress) * 0.08;
-    const lapFinish = [...this.cars.values()].some(
-      (c) => c.progress >= this.track.TRACK_LENGTH * this.settings.lapLimit,
-    );
-    if (
-      alive.length <= 1 ||
-      this.tick - this.roundStart >= 1000 ||
-      lapFinish ||
-      this.tick - this.raceStart >= this.maximumRaceTicks
-    )
-      this.endSegment(lapFinish || this.tick - this.raceStart >= this.maximumRaceTicks);
+    const lapFinish = this.finishOrder.length
+      ? unfinished.length === 0 || alive.length <= 1
+      : !duel && alive.some((c) => c.progress >= finishLine);
+    // The last two race to the line without either time limit interrupting them.
+    const timedOut =
+      !duel &&
+      (this.tick - this.roundStart >= 1000 || this.tick - this.raceStart >= this.maximumRaceTicks);
+    if (alive.length <= 1 || timedOut || lapFinish)
+      this.endSegment(lapFinish || (!duel && this.tick - this.raceStart >= this.maximumRaceTicks));
   }
   blastBlocked(origin: Vector3, target: Vector3): boolean {
     return weapons.blastBlocked(this, origin, target);
@@ -766,7 +802,11 @@ export class Race {
     const alive = [...this.cars.values()]
       .filter((c) => c.alive)
       .sort((a, b) => b.progress - a.progress);
-    const groups = [...alive.map((c) => [c.id]), ...this.deaths.slice().reverse()];
+    const groups = [
+      ...this.finishOrder.map((id) => [id]),
+      ...alive.filter((c) => !this.finishOrder.includes(c.id)).map((c) => [c.id]),
+      ...this.deaths.slice().reverse(),
+    ];
     const n = this.cars.size,
       table =
         n === 2
@@ -781,8 +821,10 @@ export class Race {
         const delta = table[Math.min(n - 1, rank + group.length - 1)] ?? 0;
         for (const id of group) {
           const c = this.cars.get(id)!;
-          c.score = clamp(c.score + delta, 0, this.settings.winningScore);
-          changes.push(`${c.name} ${delta > 0 ? '+' : ''}${delta}`);
+          const finishIndex = this.finishOrder.indexOf(id);
+          const awarded = finishIndex >= 0 ? 2 - finishIndex : delta;
+          c.score = clamp(c.score + awarded, 0, this.settings.winningScore);
+          changes.push(`${c.name} ${awarded > 0 ? '+' : ''}${awarded}`);
         }
         rank += group.length;
       }
@@ -831,6 +873,7 @@ export class Race {
         connected: c.connected,
         ready: c.ready,
         alive: c.alive,
+        finishPlace: this.finishOrder.indexOf(c.id) + 1,
         score: c.score,
         wins: c.wins,
         weapon: c.weapon,

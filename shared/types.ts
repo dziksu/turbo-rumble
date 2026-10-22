@@ -27,6 +27,8 @@ export interface CarState {
   connected: boolean;
   ready: boolean;
   alive: boolean;
+  /** 1 or 2 after completing a last-two duel; zero before finishing. */
+  finishPlace?: number;
   score: number;
   wins: number;
   weapon: Weapon | null;

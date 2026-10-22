@@ -75,7 +75,8 @@ export function controller(session: Session) {
   let readyPending = false,
     ready = false,
     latest: Snapshot | null = null,
-    dead = false;
+    dead = false,
+    finished = false;
   const pointers = new Map<number, 'left' | 'right'>();
   const sync = () => {
     const l = [...pointers.values()].includes('left'),
@@ -91,7 +92,7 @@ export function controller(session: Session) {
     const el = $('#' + id);
     el.onpointerdown = (e) => {
       e.preventDefault();
-      if (latest?.phase !== 'racing' || dead) return;
+      if (latest?.phase !== 'racing' || dead || finished) return;
       el.setPointerCapture(e.pointerId);
       pointers.set(e.pointerId, direction);
       sync();
@@ -106,7 +107,7 @@ export function controller(session: Session) {
   }
   $('#fire-control').onpointerdown = (e) => {
     e.preventDefault();
-    if (latest?.phase === 'racing' && !dead) {
+    if (latest?.phase === 'racing' && !dead && !finished) {
       input.fire();
       $('#fire-control').classList.add('pressed');
     }
@@ -184,7 +185,8 @@ export function controller(session: Session) {
     const inLobby = controllerLobbyMode(state);
     $('.pad-shell').dataset.lobby = String(inLobby);
     $('.pad-shell').dataset.phase = state.phase;
-    $('#pad-controls').hidden = inLobby;
+    finished = !!car.finishPlace;
+    $('#pad-controls').hidden = inLobby || finished;
     const mayReady = inLobby || state.phase === 'countdown';
     $('#ready-button').hidden = !mayReady;
     $<HTMLButtonElement>('#ready-button').disabled = readyPending || !socket.connected;
@@ -196,32 +198,38 @@ export function controller(session: Session) {
     const readyText = t('Gotowi: {ready}/{total}', readiness);
     if (readyCount.textContent !== readyText) readyCount.textContent = readyText;
     $('#ready-button').classList.toggle('is-ready', ready);
-    $('#pad-status-text').textContent = summaryPending
-      ? t('RUNDA {round} ZAKOŃCZONA', { round: state.round })
-      : inLobby
-        ? state.phase === 'finished'
-          ? t('Powrót do lobby za {seconds} s', { seconds: Math.ceil(state.seconds) })
-          : ready
-            ? t('✓ Gotowy. Czekamy na ekipę.')
-            : t('○ Nie gotowy. Potwierdź przyciskiem.')
-        : state.phase === 'paused'
-          ? t('Pauza — czekamy na ekran hosta.')
-          : state.phase === 'segment'
-            ? raceMessage(state)
-            : t('Gaz automatyczny. Zakręty pokonujesz sam.');
+    $('#pad-status-text').textContent =
+      finished && state.phase === 'racing'
+        ? t('Meta · {place}. miejsce. Czekamy na drugiego gracza.', { place: car.finishPlace! })
+        : summaryPending
+          ? t('RUNDA {round} ZAKOŃCZONA', { round: state.round })
+          : inLobby
+            ? state.phase === 'finished'
+              ? t('Powrót do lobby za {seconds} s', { seconds: Math.ceil(state.seconds) })
+              : ready
+                ? t('✓ Gotowy. Czekamy na ekipę.')
+                : t('○ Nie gotowy. Potwierdź przyciskiem.')
+            : state.phase === 'paused'
+              ? t('Pauza — czekamy na ekran hosta.')
+              : state.phase === 'segment'
+                ? raceMessage(state)
+                : t('Gaz automatyczny. Zakręty pokonujesz sam.');
     const weapon = car.weapon ? weaponText(car.weapon) : null;
     $('#weapon-icon').textContent = weapon?.icon ?? '+';
     $('#weapon-name').textContent = weapon?.name.toUpperCase() ?? t('PUSTY SLOT');
     $('#weapon-help').textContent = weapon?.help ?? t('Zbieraj złote kryształy na torze');
     $('#fire-control').style.setProperty('--weapon', weapon?.color ?? car.color);
     $('#fire-control').classList.toggle('empty', !weapon);
-    $('#pad-phase').textContent = inLobby
-      ? t('CZEKAMY NA EKIPĘ')
-      : t('OKRĄŻENIE {lap}/{total} · RUNDA {round}', {
-          lap: state.lap,
-          total: state.lapLimit,
-          round: state.round,
-        });
+    $('#pad-phase').textContent =
+      finished && state.phase === 'racing'
+        ? t('META · {place}. MIEJSCE', { place: car.finishPlace! })
+        : inLobby
+          ? t('CZEKAMY NA EKIPĘ')
+          : t('OKRĄŻENIE {lap}/{total} · RUNDA {round}', {
+              lap: state.lap,
+              total: state.lapLimit,
+              round: state.round,
+            });
     const nowDead = !car.alive && (state.phase === 'racing' || summaryPending);
     $('#knockout').hidden = !nowDead;
     if (nowDead && !dead) {
@@ -231,7 +239,7 @@ export function controller(session: Session) {
     dead = nowDead;
     $('#pad-countdown').hidden = state.phase !== 'countdown';
     $('#pad-countdown').textContent = String(Math.ceil(state.seconds));
-    if (state.phase !== 'racing') reset();
+    if (state.phase !== 'racing' || finished) reset();
   };
   socket.on('state', render);
   onLanguageChange(() => {

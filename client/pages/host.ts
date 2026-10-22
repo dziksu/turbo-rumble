@@ -372,10 +372,22 @@ function renderHost(state: Snapshot | null) {
     score.append(unit);
     const weapon = document.createElement('span');
     weapon.className = 'standing-weapon';
-    weapon.textContent = !c.alive ? '×' : c.weapon ? weaponText(c.weapon).icon : '·';
+    weapon.textContent = c.finishPlace
+      ? '🏁'
+      : !c.alive
+        ? '×'
+        : c.weapon
+          ? weaponText(c.weapon).icon
+          : '·';
     weapon.setAttribute(
       'aria-label',
-      !c.alive ? t('Poza rundą') : c.weapon ? weaponText(c.weapon).name : t('Brak przedmiotu'),
+      c.finishPlace
+        ? t('META · {place}. MIEJSCE', { place: c.finishPlace })
+        : !c.alive
+          ? t('Poza rundą')
+          : c.weapon
+            ? weaponText(c.weapon).name
+            : t('Brak przedmiotu'),
     );
     row.append(rank, name, score, weapon);
     standings.append(row);

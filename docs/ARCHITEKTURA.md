@@ -37,6 +37,10 @@ Bonus jest osobnym stanem `Car.catchUp`, a migawka udostępnia rzeczywisty ułam
 
 Progi dobrano przed tylną granicą kamery, która na badanych fragmentach toru wypada przy około 18 m straty. Testy na trzech mapach, dla ludzi i botów, porównują lidera z identycznie jadącym autem w symulacji, w której zamrożony rywal nie dostaje bonusu ani nie może dogonić lidera: jego prędkość i pozycja pozostają identyczne, podczas gdy auto z tyłu w normalnej symulacji rzeczywiście przyspiesza i zmniejsza dystans. Testy sieciowe zapisują szczyt bonusu i jego odbiorców.
 
+## Pojedynek ostatniej dwójki
+
+Gdy w rundzie zostają dwa żywe auta, oba limity czasu przestają kończyć rundę. Każdy kierowca musi ukończyć ustawioną liczbę okrążeń. Serwer zapisuje kolejność przekroczenia mety, także w obrębie jednego kroku fizyki; pierwszy otrzymuje +2, drugi +1 przy rozliczeniu. Pierwsze auto czeka bez kolizji, jazdy i broni, a kamera śledzi drugiego kierowcę. Migawka `finishPlace` pokazuje miejsce na mecie, pad wyświetla oczekiwanie, a tabela hosta flagę. Eliminacja przed metą zachowuje dotychczasowe zasady końca rundy i punktacji. Nowa runda oraz lobby zerują kolejność mety. Dla trzech lub więcej ocalałych dotychczasowe limity i zakończenie na pierwszym przekroczeniu mety pozostają bez zmian.
+
 ## Zapis i restart
 
 Zakończony mecz jest zapisywany raz pod UUID z `INSERT OR IGNORE`. Po sekundowym pokazaniu ostatniego trafienia podium pozostaje widoczne przez 5 sekund. Termin jest oparty o zegar symulacji serwera i przesyłany jako `seconds`, więc ponowne połączenie lub zmiana języka nie restartują odliczania. Pętla automatycznie przywraca cały pokój do lobby dopiero po zapisaniu wyniku w SQLite; zeruje gotowość ludzi, zachowuje skład, admina, ustawienia i sesje. Gracze ponownie potwierdzają gotowość przed kolejnym meczem. API pokazuje ostatnich 12 meczów. Po zatrzymaniu pętli zapis końcowy następuje przed zamknięciem Socket.IO; światy Rapier i SQLite są zwalniane dopiero po handlerach rozłączenia. `close()` jest idempotentne. SIGTERM ma 15-sekundowy limit procesu, a Compose 20-sekundowy okres zatrzymania.

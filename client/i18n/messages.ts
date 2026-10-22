@@ -317,6 +317,9 @@ export const EN = {
     'A / D or ← / → · SPACE = ITEM · ↓ = BRAKE / REVERSE',
   'Punktacja wyścigu': 'Race standings',
   'Poza rundą': 'Knocked out',
+  'Meta · {place}. miejsce. Czekamy na drugiego gracza.':
+    'Finished · Place {place}. Waiting for the other racer.',
+  'META · {place}. MIEJSCE': 'FINISHED · PLACE {place}',
   'Brak przedmiotu': 'No item',
   'TRZYMAJ SIĘ TORU': 'STAY ON TRACK',
   'RUNDA {round} ZAKOŃCZONA': 'ROUND {round} COMPLETE',
