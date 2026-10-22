@@ -1,6 +1,6 @@
 # Docker i Coolify
 
-Przygotowany jest wariant **jednej aplikacji Dockerfile, z jedną repliką**. Kod nie został wysłany na zdalne repozytorium ani wdrożony na serwer produkcyjny. Wszystkie poniższe polecenia wykonuj z katalogu projektu.
+Gra działa jako **jedna aplikacja Dockerfile, z jedną repliką**. Repozytorium: [dziksu/turbo-rumble](https://github.com/dziksu/turbo-rumble), gałąź `main`. Docelowy adres: **https://turborumble.rastwork.pl**. Wszystkie poniższe polecenia wykonuj z katalogu projektu.
 
 ## Lokalna próba obrazu
 
@@ -31,7 +31,7 @@ Smoke i playtest tworzą własne pokoje. Playtest prowadzi ośmiu klientów prze
 
 ## Ustawienia zasobu Coolify
 
-1. Umieść ten projekt w wybranym repozytorium Git i podłącz je w Coolify jako nową aplikację. Lokalny katalog projektu nie ma jeszcze repozytorium zdalnego; wybór konta i opublikowanie kodu pozostają do wykonania w ramach wdrożenia.
+1. Podłącz publiczne repozytorium `https://github.com/dziksu/turbo-rumble`, gałąź `main`, jako aplikację Turbo Rumble w środowisku produkcyjnym.
 2. Build Pack: **Dockerfile**. Base Directory: katalog główny projektu. Dockerfile Location: `/Dockerfile`, target końcowy `runtime`. Nie podawaj osobnych komend build/start z Nixpacks.
 3. Port aplikacji: **4317**. Proces już nasłuchuje na `0.0.0.0`. Domena: rzeczywista domena HTTPS skonfigurowana w DNS dla tego serwera. Przekazuj HTTP i WebSocket przez ten sam origin; Socket.IO działa pod `/socket.io/`.
 4. Dodaj Persistent Storage typu volume, destination **`/app/data`**. Kontener pracuje jako użytkownik `node`, UID/GID **1000:1000**. Przy bind mount upewnij się, że ten użytkownik może zapisywać do katalogu. Nie montuj pustego volume na całym `/app`, bo ukryłby pliki aplikacji.
@@ -49,6 +49,14 @@ Smoke i playtest tworzą własne pokoje. Playtest prowadzi ośmiu klientów prze
 | `MAX_ROOMS`        | `50` domyślnie; limit ochronny, nie wynik benchmarku             |
 
 Jeśli przed Traefikiem stoi dodatkowy CDN/proxy, ustal rzeczywisty łańcuch i jego filtrowanie nagłówków. Nie ustawiaj automatycznie `trust proxy=true`; limit prób tworzenia i dołączania jest oparty o IP klienta. Aplikacja nie powinna być publicznie dostępna z pominięciem zaufanego proxy przy włączonym zaufaniu do forwarded headers.
+
+## Cloudflare Tunnel w produkcji
+
+- Publiczna domena: `turborumble.rastwork.pl`, z HTTPS kończonym na brzegu Cloudflare.
+- Istniejący tunel `Collify-BEN-Linux` kieruje tę domenę bezpośrednio do `http://127.0.0.1:14317`. Mapowanie kontenera w Coolify: `127.0.0.1:14317:4317`. Port hosta jest dostępny tylko lokalnie; ta trasa nie przechodzi przez Traefik.
+- Runtime: `PUBLIC_URL=https://turborumble.rastwork.pl`, `TRUST_PROXY_HOPS=1`, `DATA_DIR=/app/data`. `NODE_ENV=production` jest dostępne wyłącznie w runtime, aby build instalował zależności deweloperskie.
+- Named volume dla `/app/data` zachowuje wyniki; nie skaluj aplikacji powyżej jednej instancji. Mapowanie stałego portu wymaga zatrzymania starego kontenera przed uruchomieniem nowego.
+- `.dockerignore` wyklucza `docker-compose.yaml` generowany przez Coolify. Ten manifest służy do uruchamiania kontenera i nie powinien trafiać do źródeł sprawdzanych podczas budowania obrazu. Repozytoryjny `compose.yaml` pozostaje dostępny do lokalnych prób.
 
 ## Health i odbiór
 
