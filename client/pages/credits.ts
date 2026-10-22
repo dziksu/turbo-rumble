@@ -4,6 +4,9 @@ export function creditsPage() {
   document.body.className = 'credits-page';
   app.innerHTML = `${header('<span class="edition">Zasoby i licencje</span>')}
   <main class="credits-main"><p class="eyebrow">TURBO RUMBLE</p><h1>Zasoby i gotowe rozwiązania</h1>
+  <h2>Licencja gry</h2>
+  <p><a href="https://polyformproject.org/licenses/noncommercial/1.0.0">PolyForm Noncommercial 1.0.0</a><span> — autorski kod gry do użytku niekomercyjnego. Zewnętrzne zasoby zachowują własne licencje.</span></p>
+  <p>Required Notice: Copyright 2026 Benjamin Rast (https://github.com/dziksu)</p>
   <p>Modele i biblioteki są dostępne bez opłat. Gra nie korzysta z kodu, grafik ani muzyki Racing Wars.</p><ul>
   <li><a href="https://kenney.nl/assets/car-kit">Kenney Car Kit</a><span> — samochody, licencja </span><a href="/assets/cars/LICENSE.txt">CC0</a>.</li>
   <li><a href="https://kenney.nl/assets/nature-kit">Kenney Nature Kit</a><span> — palmy, kaktusy i skały, licencja </span><a href="/assets/nature/LICENSE.txt">CC0</a>.</li>
@@ -22,6 +25,8 @@ export function creditsPage() {
   <li>Bungee i Space Grotesk — lokalnie dostarczane fonty, SIL Open Font License.</li>
   <li>Vite, Express, TypeScript i tsx — narzędzia budowania i serwer, licencje w pakietach npm.</li></ul>
   <p>Rakieta i mina korzystają z dopasowanych modeli Kenney. Kula mrozu, cewka impulsu, zbiorniki nitro i mocowania to geometria przygotowana dla Turbo Rumble.</p>
+  <h2>Ilustracje menu</h2><p>Filmowe tła wygenerowano z pomocą AI na podstawie modeli używanych w grze. Są ilustracjami promocyjnymi, nie zrzutami rozgrywki.</p>
+  <p><a href="/author">Autor gry</a></p>
   <a class="button primary" href="/">Wróć na stronę główną</a></main>`;
   mountLanguageSwitch(app);
 }

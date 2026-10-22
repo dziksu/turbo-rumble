@@ -90,16 +90,16 @@ export function mountLanguageSwitch(root: HTMLElement) {
   if (!bar) return;
   const picker = document.createElement('div');
   picker.className = 'language-switch';
-  picker.setAttribute('role', 'group');
-  picker.innerHTML =
-    '<button type="button" data-language="en" lang="en" title="English" aria-label="English">EN</button><button type="button" data-language="pl" lang="pl" title="Polski" aria-label="Polski">PL</button>';
+  const select = document.createElement('select');
+  select.className = 'language-select';
+  select.innerHTML =
+    '<option value="en" lang="en">🇬🇧 English</option><option value="pl" lang="pl">🇵🇱 Polski</option>';
+  picker.append(select);
   bar.append(picker);
-  for (const button of picker.querySelectorAll<HTMLButtonElement>('button'))
-    button.onclick = () => setLanguage(parseLanguage(button.dataset.language));
+  select.onchange = () => setLanguage(parseLanguage(select.value));
   const render = () => {
-    picker.setAttribute('aria-label', language === 'en' ? 'Language' : 'Język');
-    for (const button of picker.querySelectorAll('button'))
-      button.setAttribute('aria-pressed', String(button.dataset.language === language));
+    select.setAttribute('aria-label', language === 'en' ? 'Language' : 'Język');
+    select.value = language;
   };
   const stopText = bindTranslations(root),
     stopPicker = onLanguageChange(render);

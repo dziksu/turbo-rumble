@@ -1,0 +1,19 @@
+Required Notice: Copyright 2026 Benjamin Rast (https://github.com/dziksu)
+
+Turbo Rumble's original application code and documentation are licensed under
+the PolyForm Noncommercial License 1.0.0. See LICENSE for the complete terms.
+
+Third-party software, fonts, models, textures, music and recordings are excluded
+from this license grant. They retain their original licenses and notices. The
+project's noncommercial restriction does not restrict rights granted separately
+by those third-party licenses, including CC0 and CC BY 3.0.
+
+Retain all applicable third-party notices when distributing the game. Sources,
+license files and modification notices are included in public/assets/ and the
+in-game /credits page. In particular, the tire-skid recording is attributed to
+audible-edge (Tom Haigh), edited by qubodup, under CC BY 3.0; see
+public/assets/audio/SOURCE.md and public/assets/audio/CC-BY-3.0.txt.
+
+AI-generated menu illustrations and their provenance are documented in
+public/assets/cinematics/SOURCE.md. This notice does not assert ownership of
+third-party materials or create rights in material not protected by copyright.

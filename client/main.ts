@@ -3,6 +3,7 @@ import '@fontsource/bungee/latin-ext.css';
 import '@fontsource/space-grotesk/latin-ext.css';
 import './style.css';
 import './shared-screen.css';
+import './cinematic-home.css';
 import { app, toast } from './core/dom.ts';
 import { home } from './pages/home.ts';
 import { joinPage } from './pages/join.ts';
@@ -19,6 +20,7 @@ else if (import.meta.env.DEV && route === '/audio-check')
   void import('./audio-check.ts').then((m) => m.mountAudioCheck(app));
 else if (route.startsWith('/host/'))
   void hostPage(route.split('/')[2]).catch((e) => toast(e.message));
+else if (route === '/author') void import('./pages/author.ts').then((m) => m.authorPage());
 else if (route === '/credits') void import('./pages/credits.ts').then((m) => m.creditsPage());
 else if (route === '/join') void joinPage();
 else void home();

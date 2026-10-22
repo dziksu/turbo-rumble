@@ -1,3 +1,4 @@
+import { mountCinematicBackground } from '../cinematic-background.ts';
 import { mountLanguageSwitch } from '../i18n.ts';
 import { app, $, header, toast } from '../core/dom.ts';
 import { api } from '../core/api.ts';
@@ -15,61 +16,88 @@ async function createGame() {
   }
 }
 export async function home() {
-  document.body.className = 'home-page';
-  app.innerHTML = /* HTML */ `${header('<span class="edition">PARTY RACER <i></i> 2–8 GRACZY</span><button class="text-button" id="open-rules">Jak grać <span>↗</span></button>')}
-    <main class="home-main">
-      <section class="hero-copy">
+  document.body.className = 'home-page cinematic-home';
+  app.innerHTML = /* HTML */ ` <div class="cinema-backdrop" aria-hidden="true">
+      <img
+        class="cinema-image is-active"
+        src="/assets/cinematics/desert.webp"
+        alt=""
+        fetchpriority="high"
+        decoding="async"
+      />
+      <img class="cinema-image" alt="" decoding="async" />
+      <div class="cinema-shade"></div>
+    </div>
+    ${header('<span class="edition">PARTY RACER <i></i> 2–8 GRACZY</span><button class="text-button" id="open-rules">Jak grać <span>↗</span></button>')}
+    <main class="launch-main">
+      <section class="launch-copy" aria-labelledby="launch-title">
         <p class="eyebrow"><span class="live-dot"></span> JEDEN EKRAN. CAŁA EKIPA.</p>
-        <h1>MAŁE AUTA.<br />WIELKA<br /><span>ROZRÓBA.</span></h1>
-        <p class="hero-description">
-          Zamień telefon w pad. Skacz, dryfuj i zrób rozróbę ze znajomymi. Jeden ekran, cała ekipa.
+        <h1 id="launch-title">MAŁE AUTA.<br />WIELKA<br /><span>ROZRÓBA.</span></h1>
+        <p class="launch-description">
+          Zamień telefon w pad. Skacz, dryfuj i zrób rozróbę ze znajomymi.
         </p>
-        <p class="play-device">NA KOMPUTERZE LUB TV</p>
-        <button class="button primary large" id="create-room">Stwórz pokój <span>↗</span></button>
-        <p class="host-instruction">To będzie wspólny ekran. Telefony posłużą jako pady.</p>
-        <div class="hero-tags">
+        <p class="launch-device">NA KOMPUTERZE LUB TV</p>
+        <button class="button primary" id="create-room">Stwórz pokój <span>↗</span></button>
+        <p class="launch-hint">To będzie wspólny ekran. Telefony posłużą jako pady.</p>
+        <div class="launch-tags">
           <span>Bez instalacji</span><span>Darmowa gra</span><span>Telefon = pad</span>
         </div>
       </section>
-      <div class="home-visual">
-        <div id="home-world" class="home-world" aria-hidden="true"></div>
-        <button
-          id="intro-toggle"
-          class="intro-toggle"
-          aria-label="Wstrzymaj animację"
-          aria-pressed="false"
-        >
-          Ⅱ
-        </button>
-      </div>
-      <aside class="join-card home-join-card" id="join-menu">
+      <aside class="launch-join" aria-labelledby="join-title">
         <span class="card-kicker">NA TELEFONIE</span>
-        <h2>Dołącz do gry.</h2>
-        <p class="join-instruction">Wpisz kod z dużego ekranu.</p>
+        <h2 id="join-title">Ekipa już czeka?</h2>
+        <p>Wpisz kod z dużego ekranu.</p>
         <form id="join-form">
-          <label for="room-code">KOD POKOJU</label
-          ><input
-            id="room-code"
-            name="code"
-            maxlength="6"
-            placeholder="ABC123"
-            autocomplete="off"
-            autocapitalize="characters"
-            spellcheck="false"
-            required
-            pattern="[A-Za-z2-9]{6}"
-          /><button class="button dark" type="submit">Dołącz <span>→</span></button>
+          <label for="room-code">KOD POKOJU</label>
+          <div class="launch-code-row">
+            <input
+              id="room-code"
+              name="code"
+              maxlength="6"
+              placeholder="ABC123"
+              autocomplete="off"
+              autocapitalize="characters"
+              spellcheck="false"
+              required
+              pattern="[A-Za-z2-9]{6}"
+            />
+            <button class="button" type="submit">Dołącz <span>→</span></button>
+          </div>
         </form>
-        <span class="join-footnote">Otwórz tę stronę na swoim telefonie.</span>
+        <span class="launch-join-hint">Otwórz tę stronę na swoim telefonie.</span>
       </aside>
-      <div class="track-label">
-        <span class="track-number">03</span
-        ><span><small>WYBIERZ SWOJĄ TRASĘ</small><strong>Pustynia · Las · Wulkan</strong></span
-        ><span class="track-line"></span><span>3 MAPY / JEDNA EKIPA</span>
+      <div class="cinema-controls" aria-label="Sceny w tle">
+        <div class="cinema-caption">
+          <span id="scene-counter">01 / 03</span><strong id="scene-name">SUNDOWN JUNCTION</strong
+          ><span class="cinema-art-label">FILMOWE SCENY</span>
+        </div>
+        <div class="cinema-buttons">
+          <button class="scene-dot" data-scene="0" aria-label="Pustynia" aria-pressed="true">
+            <span>01</span>
+          </button>
+          <button class="scene-dot" data-scene="1" aria-label="Las" aria-pressed="false">
+            <span>02</span>
+          </button>
+          <button class="scene-dot" data-scene="2" aria-label="Wulkan" aria-pressed="false">
+            <span>03</span>
+          </button>
+          <button
+            class="cinema-pause"
+            id="cinema-pause"
+            aria-label="Wstrzymaj animację"
+            aria-pressed="false"
+          >
+            Ⅱ
+          </button>
+        </div>
       </div>
     </main>
-    <footer class="home-footer">
-      <span>GAZ. CHAOS. REWANŻ.</span><span><a href="/credits">Zasoby i licencje</a></span>
+    <footer class="launch-footer">
+      <span>GAZ. CHAOS. REWANŻ.</span>
+      <nav aria-label="Informacje o grze">
+        <a href="/author">Autor</a><a href="/credits">Zasoby i licencje</a
+        ><a class="repo-link" href="https://github.com/dziksu/turbo-rumble">Kod źródłowy ↗</a>
+      </nav>
     </footer>
     <dialog id="rules" aria-labelledby="rules-title">
       <button class="dialog-close" aria-label="Zamknij">×</button>
@@ -111,13 +139,5 @@ export async function home() {
   };
   $('#open-rules').onclick = () => $<HTMLDialogElement>('#rules').showModal();
   $('.dialog-close').onclick = () => $<HTMLDialogElement>('#rules').close();
-  void import('../intro-scene.ts')
-    .then(({ IntroScene }) => {
-      const intro = new IntroScene($('#home-world'), $<HTMLButtonElement>('#intro-toggle'));
-      return intro.ready;
-    })
-    .catch(() => {
-      $('#intro-toggle').hidden = true;
-      $('#home-world').classList.add('intro-unavailable');
-    });
+  mountCinematicBackground(app);
 }

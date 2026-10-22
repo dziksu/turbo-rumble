@@ -1,5 +1,35 @@
 // Gettext-style source keys keep Polish templates readable and allow typed runtime messages.
 export const EN = {
+  'Licencja gry': 'Game license',
+  '— autorski kod gry do użytku niekomercyjnego. Zewnętrzne zasoby zachowują własne licencje.':
+    '— original game code for noncommercial use. Third-party assets retain their own licenses.',
+
+  'Zamień telefon w pad. Skacz, dryfuj i zrób rozróbę ze znajomymi.':
+    'Turn your phone into a controller. Jump, drift and cause mayhem with your friends.',
+  'Ekipa już czeka?': 'Crew already waiting?',
+  'Sceny w tle': 'Background scenes',
+  'FILMOWE SCENY': 'CINEMATIC SCENES',
+  Pustynia: 'Desert',
+  Las: 'Forest',
+  Wulkan: 'Volcano',
+  'Informacje o grze': 'About the game',
+  Autor: 'Creator',
+  'Kod źródłowy ↗': 'Source code ↗',
+  'Repozytorium GitHub ↗': 'GitHub repository ↗',
+  'CZŁOWIEK ZA ROZRÓBĄ': 'THE PERSON BEHIND THE MAYHEM',
+  'Autor gry': 'Game creator',
+  'Ponad 10 lat w branży. Senior Web Developer i Team Lead. Tworzę skalowalne architektury frontendowe, prowadzę zespoły i aktywnie wykorzystuję AI.':
+    '10+ years in the industry. Senior Web Developer & Team Lead. I build scalable frontend architectures, lead teams, and actively integrate AI.',
+  'Bielsko-Biała, Polska': 'Bielsko-Biała, Poland',
+  'Profil GitHub': 'GitHub profile',
+  'Strona autora': 'Creator’s website',
+  'Kod gry dla wszystkich.': 'The game’s code, for everyone.',
+  'Kod źródłowy gry jest dostępny na GitHubie do użytku niekomercyjnego.':
+    'The game’s source code is available on GitHub for noncommercial use.',
+  'Ilustracje menu': 'Menu illustrations',
+  'Filmowe tła wygenerowano z pomocą AI na podstawie modeli używanych w grze. Są ilustracjami promocyjnymi, nie zrzutami rozgrywki.':
+    'Cinematic backgrounds were generated with AI using the game’s models as references. They are promotional illustrations, not gameplay screenshots.',
+
   'NA KOMPUTERZE LUB TV': 'ON A COMPUTER OR TV',
   'NA TELEFONIE': 'ON YOUR PHONE',
   'To będzie wspólny ekran. Telefony posłużą jako pady.':
