@@ -250,3 +250,28 @@
     padding-bottom: 8px;
   }
 }
+
+.stats-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+.stats-page .language-switch {
+  margin-left: 0;
+}
+.stats-page .language-select {
+  background: #1b293c;
+  color: #edf3fb;
+  border-color: #40536c;
+}
+.stats-page .language-switch::after {
+  border-color: #edf3fb;
+}
+@media (max-width: 540px) {
+  .stats-controls {
+    flex-wrap: wrap;
+  }
+  .stats-controls .stats-range {
+    flex: 1;
+  }
+}

@@ -1,4 +1,5 @@
 import { app } from '../core/dom.ts';
+import { getLocale, mountLanguageSwitch, onLanguageChange, t } from '../i18n.ts';
 import {
   ACTIVITY_RANGES,
   isActivityHistory,
@@ -7,22 +8,24 @@ import {
 } from '../../shared/activity.ts';
 import '../stats.css';
 
-const dateTime = new Intl.DateTimeFormat('pl-PL', {
-  timeZone: 'Europe/Warsaw',
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-});
-const axisTime = new Intl.DateTimeFormat('pl-PL', {
-  timeZone: 'Europe/Warsaw',
-  day: '2-digit',
-  month: '2-digit',
-  hour: '2-digit',
-  minute: '2-digit',
-});
+function timeFormatters() {
+  const options: Intl.DateTimeFormatOptions = {
+    timeZone: 'Europe/Warsaw',
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  };
+  return {
+    dateTime: new Intl.DateTimeFormat(getLocale(), {
+      ...options,
+      year: 'numeric',
+      second: '2-digit',
+    }),
+    axisTime: new Intl.DateTimeFormat(getLocale(), options),
+  };
+}
+let { dateTime, axisTime } = timeFormatters();
 const hourTime = new Intl.DateTimeFormat('en-GB', {
   timeZone: 'Europe/Warsaw',
   hour: '2-digit',
@@ -62,9 +65,9 @@ function timeline(data: ActivityHistory) {
   }
   // Individual buckets remain inspectable, including a lone first observation.
   for (const point of data.points) {
-    svg += `<circle class="stats-point" cx="${x(point.at)}" cy="${y(point.players)}" r="3"><title>${axisTime.format(point.at)} · online: ${point.players} · w rozgrywce: ${point.playingPlayers}</title></circle>`;
+    svg += `<circle class="stats-point" cx="${x(point.at)}" cy="${y(point.players)}" r="3"><title>${t('{date} · online: {online} · w rozgrywce: {playing}', { date: axisTime.format(point.at), online: point.players, playing: point.playingPlayers })}</title></circle>`;
   }
-  return `<svg viewBox="0 0 1000 300" role="img" aria-label="Historia maksymalnej liczby graczy online i w rozgrywce"><title>Liczba graczy w czasie. Luki oznaczają brak zapisanych pomiarów.</title>${svg}</svg>`;
+  return `<svg viewBox="0 0 1000 300" role="img" aria-label="${t('Historia maksymalnej liczby graczy online i w rozgrywce')}"><title>${t('Liczba graczy w czasie. Luki oznaczają brak zapisanych pomiarów.')}</title>${svg}</svg>`;
 }
 
 function hourly(data: ActivityHistory) {
@@ -75,22 +78,20 @@ function hourly(data: ActivityHistory) {
     bucket.observed = true;
   }
   const max = Math.max(1, ...hours.map((h) => h.players));
-  return `<svg viewBox="0 0 1000 226" role="img" aria-label="Szczyt graczy online według godziny w Warszawie"><title>Maksimum graczy online dla każdej godziny w wybranym okresie</title>${hours
+  return `<svg viewBox="0 0 1000 226" role="img" aria-label="${t('Szczyt graczy online według godziny w Warszawie')}"><title>${t('Maksimum graczy online dla każdej godziny w wybranym okresie')}</title>${hours
     .map((hour, i) => {
       const x = 30 + i * 40;
       const height = (hour.players / max) * 148;
-      return `<rect class="${hour.observed ? 'stats-hour-bar' : 'stats-hour-missing'}" x="${x}" y="${174 - Math.max(2, height)}" width="26" height="${Math.max(2, height)}" rx="4"><title>${i}:00–${i}:59 · ${hour.observed ? `${hour.players} graczy online` : 'brak pomiarów'}</title></rect><text x="${x + 13}" y="${162 - height}" text-anchor="middle">${hour.observed ? hour.players : '—'}</text><text x="${x + 13}" y="205" text-anchor="middle">${String(i).padStart(2, '0')}</text>`;
+      return `<rect class="${hour.observed ? 'stats-hour-bar' : 'stats-hour-missing'}" x="${x}" y="${174 - Math.max(2, height)}" width="26" height="${Math.max(2, height)}" rx="4"><title>${i}:00–${i}:59 · ${hour.observed ? t('{count} graczy online', { count: hour.players }) : t('brak pomiarów')}</title></rect><text x="${x + 13}" y="${162 - height}" text-anchor="middle">${hour.observed ? hour.players : '—'}</text><text x="${x + 13}" y="205" text-anchor="middle">${String(i).padStart(2, '0')}</text>`;
     })
     .join('')}</svg>`;
 }
 
 export function statsPage() {
   document.body.className = 'stats-page';
-  document.documentElement.lang = 'pl';
-  document.title = 'Aktywność graczy — Turbo Rumble';
   app.innerHTML = `<main class="activity-dashboard">
     <header class="activity-header"><div><p class="stats-eyebrow">TURBO RUMBLE / DANE ZBIORCZE</p><h1>Aktywność graczy</h1></div>
-      <label class="stats-range">Zakres<select aria-label="Zakres statystyk"><option value="24h">Ostatnie 24 godziny</option><option value="7d">Ostatnie 7 dni</option><option value="30d">Ostatnie 30 dni</option></select></label>
+      <div class="stats-controls"><label class="stats-range">Zakres<select data-activity-range aria-label="Zakres statystyk"><option value="24h">Ostatnie 24 godziny</option><option value="7d">Ostatnie 7 dni</option><option value="30d">Ostatnie 30 dni</option></select></label><div data-language-switch></div></div>
     </header>
     <p class="activity-status" role="status" aria-live="polite">Ładowanie danych…</p>
     <div class="stats-content" hidden>
@@ -106,11 +107,14 @@ export function statsPage() {
       <p class="stats-footnote" data-value="coverage"></p>
     </div>
   </main>`;
-  const select = app.querySelector<HTMLSelectElement>('select')!;
+  const stopLanguageSwitch = mountLanguageSwitch(app);
+  const select = app.querySelector<HTMLSelectElement>('[data-activity-range]')!;
   const status = app.querySelector<HTMLElement>('.activity-status')!;
   const content = app.querySelector<HTMLElement>('.stats-content')!;
   const events = new AbortController();
   let range: ActivityRange = '24h';
+  let history: ActivityHistory | undefined;
+  let statusState: 'loading' | 'ready' | 'error' = 'loading';
   let timer: ReturnType<typeof setTimeout> | undefined;
   let request: AbortController | undefined;
   let suspended = false;
@@ -127,13 +131,17 @@ export function statsPage() {
     set('period-peak', peak?.players ?? '—');
     set(
       'period-time',
-      peak && peak.players > 0 ? dateTime.format(peak.peakAt) : 'Brak aktywności w okresie',
+      peak && peak.players > 0 ? dateTime.format(peak.peakAt) : t('Brak aktywności w okresie'),
     );
     set('peak', data.peak.players);
-    set('peak-time', data.peak.at === null ? 'Brak aktywności' : dateTime.format(data.peak.at));
+    set('peak-time', data.peak.at === null ? t('Brak aktywności') : dateTime.format(data.peak.at));
     set(
       'resolution',
-      `Maksimum ${data.bucketMs === 60_000 ? 'w każdej minucie' : 'w każdej godzinie'} · czas warszawski`,
+      t(
+        data.bucketMs === 60_000
+          ? 'Maksimum w każdej minucie · czas warszawski'
+          : 'Maksimum w każdej godzinie · czas warszawski',
+      ),
     );
     app.querySelector('[data-chart="timeline"]')!.innerHTML = timeline(data);
     app.querySelector('[data-chart="hourly"]')!.innerHTML = hourly(data);
@@ -148,15 +156,35 @@ export function statsPage() {
               `<tr><td>${dateTime.format(point.peakAt)}</td><td>${point.players}</td><td>${point.playingPlayers}</td><td>${point.activeRooms}</td></tr>`,
           )
           .join('')
-      : '<tr><td colspan="4">Brak aktywności w wybranym okresie.</td></tr>';
+      : `<tr><td colspan="4">${t('Brak aktywności w wybranym okresie.')}</td></tr>`;
     set(
       'coverage',
-      `Pomiary od ${dateTime.format(data.startedAt)}. Historia: do 90 dni, rekord zachowywany bezterminowo. Bez botów i ekranów hosta w liczbie graczy. Zapisywane są wyłącznie liczby i czas.`,
+      t(
+        'Pomiary od {date}. Historia: do 90 dni, rekord zachowywany bezterminowo. Bez botów i ekranów hosta w liczbie graczy. Zapisywane są wyłącznie liczby i czas.',
+        { date: dateTime.format(data.startedAt) },
+      ),
     );
     content.hidden = false;
-    status.dataset.state = 'ready';
-    status.textContent = `Aktualizacja: ${dateTime.format(data.generatedAt)} · odświeżanie co 15 s`;
+    renderStatus();
   }
+  function renderStatus() {
+    status.dataset.state = statusState;
+    status.textContent =
+      statusState === 'error'
+        ? t(
+            'Nie udało się odświeżyć danych. Widoczne dane mogą być nieaktualne. Ponowna próba za 15 s.',
+          )
+        : statusState === 'loading' || !history
+          ? t('Ładowanie danych…')
+          : t('Aktualizacja: {date} · odświeżanie co 15 s', {
+              date: dateTime.format(history.generatedAt),
+            });
+  }
+  const stopLanguage = onLanguageChange(() => {
+    ({ dateTime, axisTime } = timeFormatters());
+    if (history) render(history);
+    else renderStatus();
+  });
   function pause() {
     clearTimeout(timer);
     request?.abort();
@@ -175,12 +203,15 @@ export function statsPage() {
       if (!response.ok) throw new Error('Activity unavailable');
       const data: unknown = await response.json();
       if (!isActivityHistory(data) || data.range !== range) throw new Error('Invalid activity');
-      if (!current.signal.aborted) render(data);
+      if (!current.signal.aborted) {
+        history = data;
+        statusState = 'ready';
+        render(data);
+      }
     } catch {
       if (!current.signal.aborted) {
-        status.dataset.state = 'error';
-        status.textContent =
-          'Nie udało się odświeżyć danych. Widoczne dane mogą być nieaktualne. Ponowna próba za 15 s.';
+        statusState = 'error';
+        renderStatus();
       }
     } finally {
       if (request === current) {
@@ -196,7 +227,9 @@ export function statsPage() {
     () => {
       range = select.value as ActivityRange;
       content.hidden = true;
-      status.textContent = 'Ładowanie danych…';
+      history = undefined;
+      statusState = 'loading';
+      renderStatus();
       refreshNow();
     },
     { signal: events.signal },
@@ -214,6 +247,8 @@ export function statsPage() {
   const dispose = () => {
     pause();
     events.abort();
+    stopLanguage();
+    stopLanguageSwitch?.();
   };
   window.addEventListener(
     'pagehide',

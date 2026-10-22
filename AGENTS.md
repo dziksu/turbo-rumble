@@ -13,6 +13,8 @@ Use relevant available MCP tools before generic alternatives. Prefix terminal co
 
 ## Work and checks
 
+User-facing interfaces default to English. Reuse the shared language selection, saved preference, translations and locale formatting in `client/i18n.ts` on every page; never force a page to Polish. Polish is an explicit user choice.
+
 Node 24 (`.nvmrc`), `npm ci`, `npm run dev` on port 4317. `npm run check` covers TypeScript, ESLint, formatting and tests. `npm run build` produces the browser bundle and server/backup entrypoints. Do not skip a failed check with suppressions; fix the cause or report an actual environment limitation.
 
 For isolated integration QA, use a free `PORT` and temporary `DATA_DIR`; set `GAME_URL` for `npm run smoke` / `npm run playtest`. These scripts create rooms and drive eight network controllers. Never reuse an active user room without explicit intent. Keep the final development preview running and remove only temporary servers/containers you created.

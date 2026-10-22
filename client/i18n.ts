@@ -1,6 +1,7 @@
 import {
   EN,
   parseLanguage,
+  languageLocale,
   translate,
   type Language,
   type Message,
@@ -19,6 +20,7 @@ try {
 }
 const listeners = new Set<() => void>();
 export const getLanguage = () => language;
+export const getLocale = () => languageLocale(language);
 export const t = (message: Message, values?: Values) => translate(message, language, values);
 export const translateMessage = (message: string) => translate(message, language);
 export function onLanguageChange(listener: () => void) {
@@ -93,7 +95,7 @@ export function bindTranslations(root: HTMLElement) {
 let disposePage: (() => void) | undefined;
 export function mountLanguageSwitch(root: HTMLElement) {
   disposePage?.();
-  const bar = root.querySelector('.topbar, .pad-header');
+  const bar = root.querySelector('.topbar, .pad-header, [data-language-switch]');
   if (!bar) return;
   const picker = document.createElement('div');
   picker.className = 'language-switch';
@@ -114,7 +116,9 @@ export function mountLanguageSwitch(root: HTMLElement) {
   disposePage = () => {
     stopText();
     stopPicker();
+    picker.remove();
   };
+  return disposePage;
 }
 export function weaponText(weapon: Weapon) {
   const definition = WEAPONS[weapon];

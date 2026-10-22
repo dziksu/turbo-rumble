@@ -102,7 +102,7 @@ function staticContent(page: ReturnType<typeof pageMetadata>['page']) {
   if (page === 'credits')
     return '<main class="html-fallback"><h1>Turbo Rumble — Credits &amp; Licenses</h1><p>Original game code: <a href="https://polyformproject.org/licenses/noncommercial/1.0.0">PolyForm Noncommercial 1.0.0</a>. Third-party resources retain their own licenses.</p><p>Kenney models are CC0. The tire-skid recording by audible-edge (Tom Haigh), edited by qubodup, is CC BY 3.0. <a href="/assets/audio/SOURCE.md">Audio credits and changes</a>. Three.js and Socket.IO are MIT; Rapier is Apache 2.0; Bungee and Space Grotesk use SIL OFL.</p><p>Menu illustrations were generated with AI using the game’s models as references. <a href="/assets/cinematics/SOURCE.md">Illustration provenance</a>.</p><noscript><p>Enable JavaScript to view the full interactive credits page.</p></noscript><a href="/">Play Turbo Rumble</a></main>';
   if (page === 'stats')
-    return '<main class="html-fallback"><h1>Aktywność graczy</h1><p>Włącz JavaScript, aby wyświetlić zbiorcze dane i wykresy.</p></main>';
+    return '<main class="html-fallback"><h1>Player activity</h1><p>Enable JavaScript to view aggregate data and charts.</p></main>';
   if (page === 'private')
     return '<main class="html-fallback"><h1>Turbo Rumble</h1><p>Enable JavaScript to host or join a game.</p><a href="/">Back to home</a></main>';
   return '<main class="html-fallback"><h1>Page not found</h1><a href="/">Play Turbo Rumble</a></main>';

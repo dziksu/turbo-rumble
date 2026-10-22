@@ -79,6 +79,9 @@ test('crawlers receive page content, canonical metadata and the real social imag
       assert.equal(page.headers.get('x-robots-tag'), 'noindex, nofollow');
       assert.match(await page.text(), /name="robots" content="noindex, nofollow"/);
     }
+    const statsHtml = await fetch(base + '/stats').then((response) => response.text());
+    assert.match(statsHtml, /<h1>Player activity<\/h1>/);
+    assert.ok(!statsHtml.includes('Aktywność graczy'));
     const missing = await fetch(base + '/not-a-real-page');
     assert.equal(missing.status, 404);
     assert.equal(missing.headers.get('x-robots-tag'), 'noindex, nofollow');

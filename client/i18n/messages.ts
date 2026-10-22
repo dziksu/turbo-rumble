@@ -1,5 +1,54 @@
 // Gettext-style source keys keep Polish templates readable and allow typed runtime messages.
 export const EN = {
+  'TURBO RUMBLE / DANE ZBIORCZE': 'TURBO RUMBLE / AGGREGATE DATA',
+  'Aktywność graczy': 'Player activity',
+  Zakres: 'Period',
+  'Zakres statystyk': 'Statistics period',
+  'Ostatnie 24 godziny': 'Last 24 hours',
+  'Ostatnie 7 dni': 'Last 7 days',
+  'Ostatnie 30 dni': 'Last 30 days',
+  'Ładowanie danych…': 'Loading data…',
+  Podsumowanie: 'Overview',
+  'Gracze online teraz': 'Players online now',
+  'Połączone kontrolery ludzi': 'Connected human controllers',
+  'W rozgrywce teraz': 'Playing now',
+  'Odliczanie, wyścig lub runda': 'Countdown, race or round',
+  'Szczyt w wybranym okresie': 'Peak in selected period',
+  'Rekord od początku pomiarów': 'All-time player record',
+  'Gracze w czasie': 'Players over time',
+  'W rozgrywce': 'Playing',
+  'Wartości to maksima w przedziałach czasu. Luki oznaczają brak pomiarów.':
+    'Values are peaks within each time interval. Gaps indicate missing observations.',
+  'O której jest największy ruch?': 'When is it busiest?',
+  'Szczyt online według godziny · Europe/Warsaw': 'Peak online players by hour · Europe/Warsaw',
+  'Największe szczyty w okresie': 'Highest peaks in this period',
+  'Czas szczytu': 'Peak time',
+  'W rozgrywce*': 'Playing*',
+  'Aktywne pokoje*': 'Active rooms*',
+  '* Maksima w tym samym przedziale; nie muszą wystąpić w tej samej sekundzie.':
+    '* Peaks within the same interval; they may occur at different times.',
+  'Brak aktywności w okresie': 'No activity in this period',
+  'Brak aktywności': 'No activity',
+  'Brak aktywności w wybranym okresie.': 'No activity in the selected period.',
+  'Maksimum w każdej minucie · czas warszawski': 'Peak per minute · Warsaw time',
+  'Maksimum w każdej godzinie · czas warszawski': 'Peak per hour · Warsaw time',
+  'Pomiary od {date}. Historia: do 90 dni, rekord zachowywany bezterminowo. Bez botów i ekranów hosta w liczbie graczy. Zapisywane są wyłącznie liczby i czas.':
+    'Tracking since {date}. History: up to 90 days; the all-time record is retained indefinitely. Player counts exclude bots and host screens. Only counts and timestamps are stored.',
+  'Aktualizacja: {date} · odświeżanie co 15 s': 'Updated: {date} · refreshes every 15 s',
+  'Nie udało się odświeżyć danych. Widoczne dane mogą być nieaktualne. Ponowna próba za 15 s.':
+    'Could not refresh the data. Displayed data may be outdated. Retrying in 15 s.',
+  'Historia maksymalnej liczby graczy online i w rozgrywce':
+    'Peak online and playing player history',
+  'Liczba graczy w czasie. Luki oznaczają brak zapisanych pomiarów.':
+    'Players over time. Gaps indicate missing observations.',
+  '{date} · online: {online} · w rozgrywce: {playing}':
+    '{date} · online: {online} · playing: {playing}',
+  'Szczyt graczy online według godziny w Warszawie': 'Peak online players by hour in Warsaw',
+  'Maksimum graczy online dla każdej godziny w wybranym okresie':
+    'Peak online players for each hour in the selected period',
+  '{count} graczy online': '{count} players online',
+  'brak pomiarów': 'no observations',
+
   'Statystyki serwera': 'Server activity',
   'Graczy online': 'Players online',
   'Aktywne pokoje': 'Active rooms',
@@ -340,6 +389,7 @@ export const EN = {
 } as const;
 export type Message = keyof typeof EN;
 export type Language = 'en' | 'pl';
+export const languageLocale = (language: Language) => (language === 'pl' ? 'pl-PL' : 'en-GB');
 export type Values = Readonly<Record<string, string | number>>;
 export function parseLanguage(value: unknown): Language {
   return value === 'pl' ? 'pl' : 'en';
