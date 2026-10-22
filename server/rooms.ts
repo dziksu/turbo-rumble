@@ -11,7 +11,7 @@ export interface Room {
   players: Map<string, string>;
   playerSockets: Map<string, string>;
   hosts: Set<string>;
-  lastActive: number;
+  emptySince: number | null;
   hostLost: number;
   matchId: string;
   saved: boolean;
@@ -54,7 +54,7 @@ export class RoomRegistry {
       players: new Map(),
       playerSockets: new Map(),
       hosts: new Set(),
-      lastActive: Date.now(),
+      emptySince: Date.now(),
       hostLost: 0,
       matchId: randomUUID(),
       saved: false,
@@ -83,7 +83,6 @@ export class RoomRegistry {
     });
     room.players.set(key, id);
     room.race.adminId ??= id;
-    room.lastActive = Date.now();
     return { room, session: { code, token: key, playerId: id, role: 'player' } };
   }
   authenticate(session: Session) {
@@ -149,7 +148,6 @@ export class RoomRegistry {
         for (const [key, id] of room.players) if (id === command.id) room.players.delete(key);
         break;
     }
-    room.lastActive = Date.now();
     return removedSocket;
   }
   syncLobby(room: Room) {

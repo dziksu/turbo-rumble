@@ -41,13 +41,16 @@ export function registerRealtime(io: GameServer, registry: RoomRegistry) {
   io.on('connection', (socket: GameSocket) => {
     const { room, playerId, host } = socket.data;
     void socket.join(room.code);
-    room.lastActive = Date.now();
+    const wasEmpty = room.emptySince !== null;
+    room.emptySince = null;
     const ownsController = () => !!playerId && room.playerSockets.get(playerId) === socket.id;
     if (host) {
       room.hosts.add(socket.id);
       room.hostLost = 0;
       room.race.resume();
     } else if (playerId) {
+      // A phone returning first gets a fresh grace period for the host to reconnect.
+      if (wasEmpty && room.hostLost) room.hostLost = Date.now();
       const previous = room.playerSockets.get(playerId);
       room.playerSockets.set(playerId, socket.id);
       if (previous && previous !== socket.id) io.sockets.sockets.get(previous)?.disconnect(true);
@@ -123,6 +126,7 @@ export function registerRealtime(io: GameServer, registry: RoomRegistry) {
         room.playerSockets.delete(playerId);
         room.race.setConnected(playerId, false);
       }
+      if (!io.sockets.adapter.rooms.get(room.code)?.size) room.emptySince ??= Date.now();
       registry.syncLobby(room);
       broadcast(room);
     });

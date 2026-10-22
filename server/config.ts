@@ -48,7 +48,7 @@ export function loadConfig(
     publicUrl,
     trustProxyHops: integer(env, 'TRUST_PROXY_HOPS', 0, 0, 5),
     maxRooms: integer(env, 'MAX_ROOMS', 50, 1, 500),
-    roomTtlMs: 30 * 60_000,
+    roomTtlMs: 3 * 60_000,
     hostReconnectMs: 30_000,
   };
 }

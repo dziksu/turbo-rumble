@@ -43,6 +43,14 @@ Zakończony mecz jest zapisywany raz pod UUID z `INSERT OR IGNORE`. API pokazuje
 
 Pokoje, tokeny, pozycje i aktywne mecze żyją w pamięci. Restart je usuwa. Wolumen przechowuje tylko zakończone wyniki. Obecna architektura wymaga jednej repliki; Redis adapter do Socket.IO sam nie rozwiązałby współdzielenia światów fizyki.
 
+## Puste pokoje i ponowne połączenie
+
+`Room.emptySince` liczy czas od rozłączenia ostatniego uwierzytelnionego socketu (telefonu lub ekranu hosta). Nowy pokój bez żadnego socketu jest pusty od utworzenia. Boty ani żądania HTTP nie przedłużają jego życia. Połączenie zeruje ten termin, a kolejne pełne rozłączenie rozpoczyna nowe 3 minuty; wiek meczu nie wpływa na czas na powrót.
+
+`server/runtime.ts` pomija `Race.step` dla pustego pokoju we wszystkich fazach, również po zakończeniu meczu. Stoją auta, boty, pociski, przeszkody i zegar symulacji. Po 3 minutach pętla usuwa pokój przez `RoomRegistry.dispose`, zwalniając kontrolery pojazdów i świat Rapier. Zakończone wyniki nadal są zapisywane w SQLite i usunięcie pokoju ich nie kasuje.
+
+W pustym pokoju zachowany jest zatrzymany stan gry i tokeny sesji. Powrót hosta przed wygaśnięciem wznawia grę; sam telefon czeka na ekran hosta. Gdy telefony pozostają połączone bez hosta, dotychczasowy limit 30 sekund przywraca lobby. Otwarty ekran hosta jest aktywnym połączeniem, nawet jeżeli na torze zostały same boty. Przejęcie pada przez nowy socket i zamknięcie tylko jednej z kilku kart hosta nie uruchamiają usuwania pokoju.
+
 ## Typowanie i utrzymanie
 
 Kompilator działa z `strict`, kontrolą fallthrough, override i wielkości liter w ścieżkach. ESLint blokuje jawne `any` i nieużywane zmienne. Prettier formatuje aktualne źródła; historyczne protokoły QA nie są przepisywane. Typy eventów obowiązują po obu stronach połączenia, ale nie zastępują walidacji obcych danych.

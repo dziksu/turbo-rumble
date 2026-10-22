@@ -28,11 +28,17 @@ export function startRuntime(
     }
   }
   const loop = setInterval(() => {
+    const now = Date.now();
     for (const room of registry.rooms.values()) {
+      // Skip every phase, including finished: even a settled race still steps Rapier.
+      if (room.emptySince !== null) {
+        if (now - room.emptySince >= config.roomTtlMs) registry.dispose(room.code);
+        continue;
+      }
       room.race.step();
       if (
         room.hostLost &&
-        Date.now() - room.hostLost > config.hostReconnectMs &&
+        now - room.hostLost > config.hostReconnectMs &&
         room.race.phase === 'paused'
       )
         room.race.lobby();
@@ -46,13 +52,6 @@ export function startRuntime(
     stepNumber++;
   }, PHYSICS_STEP_SECONDS * 1000);
   const cleanup = setInterval(() => {
-    for (const [code, room] of registry.rooms) {
-      if (
-        !io.sockets.adapter.rooms.get(code)?.size &&
-        Date.now() - room.lastActive > config.roomTtlMs
-      )
-        registry.dispose(code);
-    }
     limiter.cleanup();
   }, 60_000);
   return {
