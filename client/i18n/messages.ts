@@ -67,8 +67,8 @@ export const EN = {
   'Lewo i prawo sterują autem. Przytrzymaj zakręt, aby wejść w drift; puść lub skontruj, aby odzyskać przyczepność. Oba przyciski naraz hamują. Zostań w kadrze, unikaj przepaści i zbieraj przedmioty.':
     'Left and right steer your car. Hold a turn to drift; release or countersteer to regain grip. Hold both buttons to brake. Stay on screen, avoid gaps and collect items.',
   '03 / RÓB ZAMIESZANIE': '03 / CAUSE SOME CHAOS',
-  'Użyj rakiety, miny, mrozu, impulsu lub nitro. Startujesz z 5 punktami. Wygrywa ustalony próg punktów lub najlepszy wynik po wybranej liczbie okrążeń. Host lub pierwszy gracz ustala zasady; wszyscy gotowi uruchamiają odliczanie 10 sekund.':
-    'Use rockets, mines, frost, pulse or nitro. Start with 5 points. Reach the winning score or lead after the selected number of laps. The host or first player sets the rules; when everyone is ready, a 10-second countdown begins.',
+  'Użyj rakiety, miny, mrozu, impulsu lub nitro. Startujesz z 5 punktami. Wygrywa ustalony próg punktów lub najlepszy wynik po wybranej liczbie okrążeń. Host lub pierwszy gracz ustala zasady; wszyscy gotowi uruchamiają odliczanie 5 sekund.':
+    'Use rockets, mines, frost, pulse or nitro. Start with 5 points. Reach the winning score or lead after the selected number of laps. The host or first player sets the rules; when everyone is ready, a 5-second countdown begins.',
   'Broń na dachu zdradza, co ma przeciwnik.': 'Roof-mounted equipment reveals your rivals’ items.',
   'TWÓJ TELEFON. TWÓJ PAD.': 'YOUR PHONE. YOUR CONTROLLER.',
   'CZAS NA ROZRÓBĘ': 'TIME FOR MAYHEM',
@@ -178,8 +178,8 @@ export const EN = {
   'NA LINII STARTU': 'ON THE STARTING GRID',
   '+ Klawiatura': '+ Keyboard',
   'Start wyścigu': 'Start race',
-  'Pierwszy gracz jest adminem. Wszyscy gotowi? Start za 10 sekund.':
-    'The first player is admin. Everyone ready? Starting in 10 seconds.',
+  'Pierwszy gracz jest adminem. Wszyscy gotowi? Start za 5 sekund.':
+    'The first player is admin. Everyone ready? Starting in 5 seconds.',
   'PRZYGOTOWUJĘ TOR…': 'PREPARING THE TRACK…',
   'Głośność efektów': 'Sound effects volume',
   'Przeglądarka nie udostępniła dźwięku. Spróbuj w aktualnym Chrome, Safari lub Firefox.':
@@ -195,8 +195,8 @@ export const EN = {
   CZEKA: 'WAITING',
   'Usuń gracza {name}': 'Remove player {name}',
   'Pierwszy na starcie? To miejsce jest twoje.': 'First on the grid? This spot is yours.',
-  'Wszyscy gotowi — automatyczny start za 10 sekund.':
-    'Everyone is ready — starting automatically in 10 seconds.',
+  'Wszyscy gotowi — automatyczny start za 5 sekund.':
+    'Everyone is ready — starting automatically in 5 seconds.',
   'Czekamy na gotowość wszystkich telefonów.': 'Waiting for every controller to be ready.',
   '✓ Gotowy · cofnij': '✓ Ready · undo',
   'RUNDA {round}': 'ROUND {round}',

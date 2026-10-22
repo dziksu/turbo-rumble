@@ -27,7 +27,7 @@ test('settings reject unknown maps and nonintegral/out-of-range rules', () => {
   ])
     assert.equal(parseHostCommand({ action: 'settings', settings }), null);
 });
-test('countdown lasts exactly ten simulation seconds and cars cannot move before GO', () => {
+test('countdown lasts exactly five simulation seconds and cars cannot move before GO', () => {
   const race = new Race();
   try {
     for (let i = 0; i < 2; i++)
@@ -42,9 +42,9 @@ test('countdown lasts exactly ten simulation seconds and cars cannot move before
       });
     race.start();
     const start = { ...race.cars.get('p0')!.body.translation() };
-    assert.equal(COUNTDOWN_TICKS, 500);
-    assert.equal(race.snapshot('TEN').seconds, 10);
-    for (let i = 0; i < 499; i++) race.step();
+    assert.equal(COUNTDOWN_TICKS, 250);
+    assert.equal(race.snapshot('FIVE').seconds, 5);
+    for (let i = 0; i < COUNTDOWN_TICKS - 1; i++) race.step();
     assert.equal(race.phase, 'countdown');
     assert.deepEqual({ ...race.cars.get('p0')!.body.translation() }, start);
     race.step();
@@ -154,7 +154,7 @@ test('host and first human configure shared settings; ready auto-starts, cancels
     assert.equal(room.race.phase, 'lobby');
     await guest.timeout(1500).emitWithAck('ready', true);
     assert.equal(room.race.phase, 'countdown');
-    assert.ok(room.race.snapshot(room.code).seconds > 9.8);
+    assert.ok(room.race.snapshot(room.code).seconds > 4.8);
     const deadline = room.race.phaseUntil;
     assert.equal(
       (

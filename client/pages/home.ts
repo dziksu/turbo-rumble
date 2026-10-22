@@ -96,7 +96,7 @@ export async function home() {
           <p>
             Użyj rakiety, miny, mrozu, impulsu lub nitro. Startujesz z 5 punktami. Wygrywa ustalony
             próg punktów lub najlepszy wynik po wybranej liczbie okrążeń. Host lub pierwszy gracz
-            ustala zasady; wszyscy gotowi uruchamiają odliczanie 10 sekund.
+            ustala zasady; wszyscy gotowi uruchamiają odliczanie 5 sekund.
           </p>
         </article>
         <p class="equipment-tip">Broń na dachu zdradza, co ma przeciwnik.</p>

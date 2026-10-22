@@ -7,7 +7,7 @@ export const WINNING_SCORE = 10;
 export const LAP_LIMIT = 3;
 // A stable reference prevents redesigning one map from shortening another map’s race timeout.
 export const RACE_TIMEOUT_REFERENCE_METRES = 900;
-export const COUNTDOWN_TICKS = 10 * PHYSICS_HZ;
+export const COUNTDOWN_TICKS = 5 * PHYSICS_HZ;
 export const SUMMARY_DELAY_TICKS = PHYSICS_HZ;
 export const ROUND_SUMMARY_TICKS = 2.8 * PHYSICS_HZ;
 export const STALE_INPUT_TICKS = 12;

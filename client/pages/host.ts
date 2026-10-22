@@ -125,7 +125,7 @@ export async function hostPage(code: string) {
             Start wyścigu <span>→</span>
           </button>
           <p class="lobby-footnote" id="start-help">
-            Pierwszy gracz jest adminem. Wszyscy gotowi? Start za 10 sekund.
+            Pierwszy gracz jest adminem. Wszyscy gotowi? Start za 5 sekund.
           </p>
         </aside>
         <div class="loading-badge" id="loading">PRZYGOTOWUJĘ TOR…</div>
@@ -303,9 +303,9 @@ function renderHost(state: Snapshot | null) {
     $<HTMLButtonElement>('#start-race').disabled =
       !state.canStart || !scene || !$('#loading').hidden;
     $('#start-help').textContent = state.canStart
-      ? t('Wszyscy gotowi — automatyczny start za 10 sekund.')
+      ? t('Wszyscy gotowi — automatyczny start za 5 sekund.')
       : state.cars.length < 2
-        ? t('Pierwszy gracz jest adminem. Wszyscy gotowi? Start za 10 sekund.')
+        ? t('Pierwszy gracz jest adminem. Wszyscy gotowi? Start za 5 sekund.')
         : t('Czekamy na gotowość wszystkich telefonów.');
     $<HTMLButtonElement>('#add-bot').disabled = state.cars.length >= 8;
     const keyboard = state.cars.find((car) => car.id === keyboardId);

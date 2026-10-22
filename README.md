@@ -32,7 +32,7 @@ Podgląd: `http://localhost:4320`. Domyślnie tylko na komputerze; wariant LAN i
 ## Rozgrywka
 
 - Trzy mapy: Sundown Circuit XL (pustynia), Timber Run (las, szerokie ścieżki, fizyczne kłody i dwie rzeki) oraz Aloha Inferno (hawajski wulkan, palmy i dwie przeprawy nad lawą). Nowe mapy mają realne luki w nawierzchni i skocznie na całą szerokość drogi.
-- Pierwszy dołączający człowiek zostaje administratorem; na padzie otwiera „Ustawienia spotkania”. Zmiana zasad cofa gotowość. Gdy wszyscy potwierdzą gotowość (minimum 2 auta), gra automatycznie odlicza 10 sekund. Cofnięcie gotowości, utrata połączenia lub nowy gracz anuluje start.
+- Pierwszy dołączający człowiek zostaje administratorem; na padzie otwiera „Ustawienia spotkania”. Zmiana zasad cofa gotowość. Gdy wszyscy potwierdzą gotowość (minimum 2 auta), gra automatycznie odlicza 5 sekund. Cofnięcie gotowości, utrata połączenia lub nowy gracz anuluje start.
 - Zawieszenie czterech kół na natywnym kontrolerze Rapiera, fizyczny przechył i tłumienie lądowań. Automatyczny gaz, ręczne skręcanie. Przytrzymanie zakrętu powoduje drift, puszczenie/kontra odzyskuje przyczepność. Oba kierunki naraz hamują. Ludzie nie mają automatycznego prowadzenia po torze.
 - Delikatna pomoc w doganianiu: od 6 metrów straty do lidera stopniowo rośnie bonus do prędkości, do +12% przy 14 metrach. Wygasa po dogonieniu stawki. Nie zużywa przedmiotu, nie daje efektów nitro i nie sumuje się z nim; działa jednakowo dla graczy i botów. Hamowanie, mróz, trafienie, lot lub jazda pod prąd wyłączają pomoc.
 - Klawiatura: A/D lub strzałki lewo/prawo, spacja = przedmiot, strzałka w dół = hamulec.
