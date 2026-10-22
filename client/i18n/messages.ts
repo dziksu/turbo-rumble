@@ -72,8 +72,8 @@ export const EN = {
   'Rakieta i mina korzystają z dopasowanych modeli Kenney. Kula mrozu, cewka impulsu, zbiorniki nitro i mocowania to geometria przygotowana dla Turbo Rumble.':
     'The rocket and mine use adapted Kenney models. The frost charge, pulse coil, nitro tanks and mounts use geometry made for Turbo Rumble.',
 
-  'Klawiatura gotowa: A / D, spacja = przedmiot, ↓ = hamulec.':
-    'Keyboard ready: A / D, space = item, ↓ = brake.',
+  'Klawiatura gotowa: A / D, spacja = przedmiot, ↓ = hamulec / cofanie.':
+    'Keyboard ready: A / D, space = item, ↓ = brake / reverse.',
   'Turbo Rumble — strona główna': 'Turbo Rumble — home',
   'PARTY RACER': 'PARTY RACER',
   '2–8 GRACZY': '2–8 PLAYERS',
@@ -120,8 +120,8 @@ export const EN = {
   'Host wyświetla grę na komputerze lub TV. Każdy gracz skanuje QR albo wpisuje kod na telefonie.':
     'The host shows the game on a computer or TV. Each player scans the QR code or enters the room code on their phone.',
   '02 / TRZYMAJ TOR': '02 / STAY ON TRACK',
-  'Lewo i prawo sterują autem. Przytrzymaj zakręt, aby wejść w drift; puść lub skontruj, aby odzyskać przyczepność. Oba przyciski naraz hamują. Zostań w kadrze, unikaj przepaści i zbieraj przedmioty.':
-    'Left and right steer your car. Hold a turn to drift; release or countersteer to regain grip. Hold both buttons to brake. Stay on screen, avoid gaps and collect items.',
+  'Lewo i prawo sterują autem. Przytrzymaj zakręt, aby wejść w drift; puść lub skontruj, aby odzyskać przyczepność. Oba przyciski naraz hamują; przytrzymaj je po zatrzymaniu, aby cofać. Zostań w kadrze, unikaj przepaści i zbieraj przedmioty.':
+    'Left and right steer your car. Hold a turn to drift; release or countersteer to regain grip. Hold both buttons to brake; keep holding once stopped to reverse. Stay on screen, avoid gaps and collect items.',
   '03 / RÓB ZAMIESZANIE': '03 / CAUSE SOME CHAOS',
   'Użyj rakiety, miny, mrozu, impulsu lub nitro. Startujesz z 5 punktami. Wygrywa ustalony próg punktów lub najlepszy wynik po wybranej liczbie okrążeń. Host lub pierwszy gracz ustala zasady; wszyscy gotowi uruchamiają odliczanie 5 sekund.':
     'Use rockets, mines, frost, pulse or nitro. Start with 5 points. Reach the winning score or lead after the selected number of laps. The host or first player sets the rules; when everyone is ready, a 5-second countdown begins.',
@@ -151,7 +151,7 @@ export const EN = {
   'Skręć w prawo': 'Steer right',
   LEWO: 'LEFT',
   PRAWO: 'RIGHT',
-  'DŁUGI SKRĘT = DRIFT · OBA = HAMULEC': 'HOLD A TURN = DRIFT · BOTH = BRAKE',
+  'DŁUGI SKRĘT = DRIFT · OBA = HAMULEC / COFANIE': 'HOLD A TURN = DRIFT · BOTH = BRAKE / REVERSE',
   'Użyj przedmiotu': 'Use item',
   PRZEDMIOT: 'ITEM',
   'Zbieraj złote kryształy na torze': 'Collect golden crystals on the track',
@@ -264,7 +264,8 @@ export const EN = {
   'Czekamy na gotowość wszystkich telefonów.': 'Waiting for every controller to be ready.',
   '✓ Gotowy · cofnij': '✓ Ready · undo',
   'RUNDA {round}': 'ROUND {round}',
-  'A / D lub ← / → · SPACJA = BROŃ · ↓ = HAMULEC': 'A / D or ← / → · SPACE = ITEM · ↓ = BRAKE',
+  'A / D lub ← / → · SPACJA = BROŃ · ↓ = HAMULEC / COFANIE':
+    'A / D or ← / → · SPACE = ITEM · ↓ = BRAKE / REVERSE',
   'Punktacja wyścigu': 'Race standings',
   'Poza rundą': 'Knocked out',
   'Brak przedmiotu': 'No item',
@@ -275,6 +276,7 @@ export const EN = {
   'Za chwilę kolejny start': 'The next round starts soon',
   PAUZA: 'PAUSED',
   'Czekamy na połączenie z ekranem hosta.': 'Waiting for the host screen to reconnect.',
+  'Powrót do lobby za {seconds} s': 'Returning to lobby in {seconds}s',
   'KONIEC ROZRÓBY': 'MAYHEM COMPLETE',
   'Tak się wygrywa.': 'That’s how you win.',
   'Rewanż ↗': 'Rematch ↗',

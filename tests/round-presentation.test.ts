@@ -4,6 +4,7 @@ import { Quaternion, Vector3 } from 'three';
 import { Race, initPhysics } from '../shared/simulation.ts';
 import {
   FROST_DURATION_TICKS,
+  FINAL_RESULTS_TICKS,
   PHYSICS_HZ,
   ROUND_SUMMARY_TICKS,
   SUMMARY_DELAY_TICKS,
@@ -98,6 +99,11 @@ for (const final of [false, true])
         points,
       );
       assert.equal(race.events.filter((event) => event.type === 'round').length, 1);
+      if (final) {
+        assert.equal(FINAL_RESULTS_TICKS, 250);
+        assert.equal(race.phaseUntil - race.tick, FINAL_RESULTS_TICKS);
+        assert.equal(race.snapshot('FINAL').seconds, 5);
+      }
       if (!final) {
         assert.equal(race.phaseUntil - race.tick, ROUND_SUMMARY_TICKS);
         for (let i = 0; i < ROUND_SUMMARY_TICKS - 1; i++) race.step();

@@ -51,7 +51,7 @@ export function controller(session: Session) {
           <span>←</span><small>LEWO</small></button
         ><button class="pad-key right-key" id="right-control" aria-label="Skręć w prawo">
           <span>→</span><small>PRAWO</small></button
-        ><span class="brake-tip">DŁUGI SKRĘT = DRIFT · OBA = HAMULEC</span>
+        ><span class="brake-tip">DŁUGI SKRĘT = DRIFT · OBA = HAMULEC / COFANIE</span>
       </section>
       <section class="fire-controls">
         <button id="fire-control" class="fire-key" aria-label="Użyj przedmiotu">
@@ -200,7 +200,7 @@ export function controller(session: Session) {
       ? t('RUNDA {round} ZAKOŃCZONA', { round: state.round })
       : inLobby
         ? state.phase === 'finished'
-          ? raceMessage(state)
+          ? t('Powrót do lobby za {seconds} s', { seconds: Math.ceil(state.seconds) })
           : ready
             ? t('✓ Gotowy. Czekamy na ekipę.')
             : t('○ Nie gotowy. Potwierdź przyciskiem.')

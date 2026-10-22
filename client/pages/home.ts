@@ -138,8 +138,8 @@ export async function home() {
           <b>02 / TRZYMAJ TOR</b>
           <p>
             Lewo i prawo sterują autem. Przytrzymaj zakręt, aby wejść w drift; puść lub skontruj,
-            aby odzyskać przyczepność. Oba przyciski naraz hamują. Zostań w kadrze, unikaj przepaści
-            i zbieraj przedmioty.
+            aby odzyskać przyczepność. Oba przyciski naraz hamują; przytrzymaj je po zatrzymaniu,
+            aby cofać. Zostań w kadrze, unikaj przepaści i zbieraj przedmioty.
           </p>
         </article>
         <article>

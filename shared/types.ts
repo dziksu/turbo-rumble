@@ -45,7 +45,7 @@ export interface CarState {
   grounded?: boolean;
   /** Wheel travel in metres: front left/right, rear left/right; positive is compression. */
   suspension?: number[];
-  /** Automatic trailing-car speed bonus (0..0.16), independent of the nitro item. */
+  /** Automatic trailing-car speed bonus (0..0.30), independent of the nitro item. */
   catchUpBonus?: number;
 }
 export interface ProjectileState {

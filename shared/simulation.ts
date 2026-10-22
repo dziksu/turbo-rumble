@@ -12,6 +12,7 @@ import {
   COUNTDOWN_TICKS,
   SUMMARY_DELAY_TICKS,
   ROUND_SUMMARY_TICKS,
+  FINAL_RESULTS_TICKS,
   STALE_INPUT_TICKS,
   DISCONNECTED_PLAYER_TICKS,
   PHYSICS_HZ,
@@ -284,6 +285,8 @@ export class Race {
       steering: 0,
       drift: 0,
       grounded: false,
+      reverseHold: 0,
+      reversing: false,
       catchUp: 0,
     };
     this.cars.set(d.id, car);
@@ -310,6 +313,8 @@ export class Race {
       if (!connected) {
         c.input = { ...c.input, left: false, right: false };
         c.catchUp = 0;
+        c.reverseHold = 0;
+        c.reversing = false;
       }
     }
   }
@@ -326,6 +331,8 @@ export class Race {
     if (c) {
       c.input = { seq: -1, left: false, right: false, actionSeq: 0 };
       c.usedAction = 0;
+      c.reverseHold = 0;
+      c.reversing = false;
       c.lastInputTick = -999;
     }
   }
@@ -397,6 +404,8 @@ export class Race {
     c.steering = 0;
     c.drift = 0;
     c.grounded = false;
+    c.reverseHold = 0;
+    c.reversing = false;
     c.catchUp = 0;
     c.vehicle.reset();
   }
@@ -649,14 +658,16 @@ export class Race {
       const drive = drivingControl(
         speedForward,
         c,
-        { turn, brake, boost, frozen, hit },
+        { speed: Math.hypot(vel.x, vel.z), turn, brake, boost, frozen, hit },
         DT,
         c.catchUp,
       );
+      c.reverseHold = drive.reverseHold;
+      c.reversing = drive.reversing;
       c.steering = drive.steering;
       c.drift = c.bot ? 0 : drive.drift;
       c.body.resetForces(true);
-      c.vehicle.update({ ...drive, drift: c.drift, brake, frozen, hit });
+      c.vehicle.update({ ...drive, drift: c.drift, frozen, hit });
       c.grounded = c.vehicle.contacts > 0;
       c.catchUp = updateCatchUp(c.catchUp, leaderProgress - c.progress, eligible && c.grounded, DT);
     }
@@ -717,6 +728,8 @@ export class Race {
         if (c?.alive) {
           c.alive = false;
           c.catchUp = 0;
+          c.reverseHold = 0;
+          c.reversing = false;
           c.body.resetForces(true);
           if (c.wreckUntil <= this.tick) c.body.setEnabled(false);
           group.push(id);
@@ -800,6 +813,7 @@ export class Race {
     this.freezeSurvivors();
     this.phase = 'finished';
     this.summaryAt = this.tick + SUMMARY_DELAY_TICKS;
+    this.phaseUntil = this.summaryAt + FINAL_RESULTS_TICKS;
     this.message = `${sorted[0]?.name ?? 'Gracz'} wygrywa!`;
     this.emit('finish', this.track.trackAt(this.cameraProgress).p, this.message);
   }

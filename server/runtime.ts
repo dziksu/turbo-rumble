@@ -38,6 +38,10 @@ export function startRuntime(
         continue;
       }
       room.race.step();
+      // Keep the full podium visible, and never clear a result before SQLite saves it.
+      const returnToLobby =
+        room.race.phase === 'finished' && room.saved && room.race.tick >= room.race.phaseUntil;
+      if (returnToLobby) registry.command(room, { action: 'lobby' });
       if (
         room.hostLost &&
         now - room.hostLost > config.hostReconnectMs &&
@@ -45,7 +49,7 @@ export function startRuntime(
       )
         room.race.lobby();
       if (
-        stepNumber % SNAPSHOT_INTERVAL_TICKS === 0 &&
+        (returnToLobby || stepNumber % SNAPSHOT_INTERVAL_TICKS === 0) &&
         io.sockets.adapter.rooms.get(room.code)?.size
       )
         broadcast(room);

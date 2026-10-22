@@ -29,6 +29,8 @@ export interface Car extends Driver {
   steering: number;
   drift: number;
   grounded: boolean;
+  reverseHold: number;
+  reversing: boolean;
   catchUp: number;
 }
 export interface Shot extends ProjectileState {

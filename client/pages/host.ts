@@ -347,7 +347,7 @@ function renderHost(state: Snapshot | null) {
   $('#lap-value').innerHTML = `${state.lap}<span>/${state.lapLimit}</span>`;
   $('#round-number').textContent = t('RUNDA {round}', { round: state.round });
   $('#keyboard-hint').textContent = keyboardId
-    ? t('A / D lub ← / → · SPACJA = BROŃ · ↓ = HAMULEC')
+    ? t('A / D lub ← / → · SPACJA = BROŃ · ↓ = HAMULEC / COFANIE')
     : '';
   const standings = $('#standings');
   standings.replaceChildren();
@@ -450,7 +450,7 @@ function renderHost(state: Snapshot | null) {
       results.innerHTML = /* HTML */ ` <p class="eyebrow">KONIEC ROZRÓBY</p>
         <h1 id="results-title" tabindex="-1" autofocus>Tak się wygrywa.</h1>
         <div id="results-content"></div>
-        <p class="rematch-help">Jeszcze raz? Wróćcie do lobby i potwierdźcie gotowość.</p>
+        <p class="rematch-help" id="results-return" role="status" aria-live="polite"></p>
         <p id="results-feedback" role="alert" hidden></p>
         <div class="result-actions">
           <button class="button primary" id="rematch">Rewanż ↗</button>
@@ -462,6 +462,9 @@ function renderHost(state: Snapshot | null) {
       // A finished match resets readiness. Let everyone ready up in the lobby.
       $('#rematch').onclick = () => void returnToLobby();
     }
+    const countdown = t('Powrót do lobby za {seconds} s', { seconds: Math.ceil(state.seconds) });
+    const countdownText = $('#results-return');
+    if (countdownText.textContent !== countdown) countdownText.textContent = countdown;
     if (!resultDialog.open) resultDialog.showModal();
   }
   sound.update(state, keyboardId);
@@ -523,5 +526,5 @@ async function joinKeyboard(code: string) {
     }
   });
   socket.on('connect', () => socket.emit('ready', true));
-  toast('Klawiatura gotowa: A / D, spacja = przedmiot, ↓ = hamulec.');
+  toast('Klawiatura gotowa: A / D, spacja = przedmiot, ↓ = hamulec / cofanie.');
 }

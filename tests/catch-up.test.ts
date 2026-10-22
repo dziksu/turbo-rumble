@@ -2,7 +2,7 @@ import { before, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Quaternion, Vector3 } from 'three';
 import { CATCH_UP, catchUpTarget, updateCatchUp } from '../shared/catch-up.ts';
-import { drivingTargetSpeed } from '../shared/driving.ts';
+import { DRIVING, drivingControl, drivingTargetSpeed } from '../shared/driving.ts';
 import { Race, initPhysics } from '../shared/simulation.ts';
 import { outsideCamera, trackAt, TRACK_LENGTH } from '../shared/track.ts';
 import type { MapId } from '../shared/maps.ts';
@@ -36,7 +36,7 @@ function setup(gap = 14, bot = false, mapId: MapId = 'desert') {
     car.invulnerableUntil = 0;
     car.body.setTranslation({ x: position.x, y: 0.55, z: position.z }, true);
     car.body.setRotation(new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), at.yaw), true);
-    car.body.setLinvel(at.t.clone().multiplyScalar(17.5), true);
+    car.body.setLinvel(at.t.clone().multiplyScalar(DRIVING.speed - 1.5), true);
   }
   race.world.step();
   return race;
@@ -79,7 +79,9 @@ test('assistance starts outside the starting pack and reaches its cap before the
   for (const leader of [80, 300, 520, 740])
     assert.equal(outsideCamera(trackAt(leader - CATCH_UP.fullGap).p, leader - 4), false);
   let strength = updateCatchUp(0, 14, true, 0.02);
-  assert.ok(strength > 0 && strength < 0.1);
+  assert.ok(strength > 0 && strength < 0.15, 'the faster aid still starts smoothly');
+  for (let i = 1; i < 25; i++) strength = updateCatchUp(strength, 14, true, 0.02);
+  assert.ok(strength >= 0.95, 'at least 95% assistance within half a second');
   for (let i = 0; i < 100; i++) strength = updateCatchUp(strength, 14, true, 0.02);
   assert.ok(strength > 0.99);
   for (let i = 0; i < 100; i++) strength = updateCatchUp(strength, 3, true, 0.02);
@@ -87,15 +89,78 @@ test('assistance starts outside the starting pack and reaches its cap before the
   assert.equal(updateCatchUp(1, 20, false, 0.02), 0);
 });
 
-test('catch-up is smaller than nitro, never stacks with it, and preserves braking and frost', () => {
+test('catch-up speed stays below nitro, never stacks with it, and preserves braking and frost', () => {
   const base = drivingTargetSpeed(false, false, false),
     assist = drivingTargetSpeed(false, false, false, 1),
     nitro = drivingTargetSpeed(false, true, false);
-  assert.ok(Math.abs(assist / base - 1.16) < 1e-12);
+  assert.ok(Math.abs(assist / base - 1.3) < 1e-12);
   assert.ok(assist < nitro);
   assert.equal(drivingTargetSpeed(false, true, false, 1), nitro);
   assert.equal(drivingTargetSpeed(true, false, false, 1), 0);
   assert.equal(drivingTargetSpeed(false, false, true, 1), drivingTargetSpeed(false, false, true));
+});
+
+test('trailing assistance raises acceleration from low speed and never reduces normal propulsion', () => {
+  const state = { steering: 0, drift: 0, grounded: true, reverseHold: 0, reversing: false };
+  const input = { speed: 0, turn: 0, brake: false, boost: false, frozen: false, hit: false };
+  assert.equal(drivingTargetSpeed(false, false, false), 22);
+  assert.equal(drivingControl(0, state, input, 0.02).acceleration, 15);
+  assert.equal(drivingControl(0, state, input, 0.02, 1).acceleration, 21);
+  for (const speed of [0, 8, 18, 22, 26, 30])
+    for (const bonus of [0, 0.25, 0.5, 1]) {
+      const normal = drivingControl(speed, state, { ...input, speed }, 0.02);
+      const assisted = drivingControl(speed, state, { ...input, speed }, 0.02, bonus);
+      assert.ok(
+        assisted.acceleration >= normal.acceleration,
+        'a catch-up bonus can only increase the normal forward acceleration',
+      );
+      assert.equal(assisted.steering, normal.steering);
+    }
+  for (const mode of ['brake', 'boost', 'frozen', 'hit', 'air'] as const) {
+    const controlState = { ...state, grounded: mode !== 'air' };
+    const controlInput = { ...input, [mode]: true };
+    assert.equal(
+      drivingControl(0, controlState, controlInput, 0.02, 1).acceleration,
+      drivingControl(0, controlState, controlInput, 0.02).acceleration,
+      mode,
+    );
+  }
+});
+
+test('a slow trailing car accelerates earlier while the leader matches an unassisted race', () => {
+  const assisted = setup(),
+    reference = setup();
+  try {
+    for (const race of [assisted, reference])
+      for (const car of race.cars.values()) car.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+    for (let tick = 0; tick < 50; tick++) {
+      reference.cars.get('trailer')!.catchUp = 0;
+      step(assisted);
+      step(reference);
+      const leader = assisted.cars.get('leader')!,
+        control = reference.cars.get('leader')!;
+      assert.ok(
+        new Vector3()
+          .copy(leader.body.translation())
+          .distanceTo(new Vector3().copy(control.body.translation())) < 0.0001,
+        'the leader never pays for the trailing acceleration bonus',
+      );
+    }
+    const speed = (race: Race) =>
+      race.snapshot('ACCEL').cars.find((car) => car.id === 'trailer')!.speed;
+    assert.ok(
+      speed(assisted) > speed(reference) + 1,
+      `early recovery speed: ${speed(assisted)} vs ${speed(reference)}`,
+    );
+    assert.ok(
+      assisted.cars.get('trailer')!.progress > reference.cars.get('trailer')!.progress + 0.3,
+    );
+    assert.equal(assisted.phase, 'racing');
+    assert.equal(assisted.cars.get('trailer')!.alive, true);
+  } finally {
+    assisted.dispose();
+    reference.dispose();
+  }
 });
 
 test('a human trailer gains actual speed and closes the gap without consuming an item or nitro effects', () => {
@@ -182,7 +247,7 @@ test('assistance uses unwrapped progress across the finish line and ignores elim
         position = at.p.clone().addScaledVector(at.n, car.slot ? 2.5 : -2.5);
       car.body.setTranslation({ x: position.x, y: 0.55, z: position.z }, true);
       car.body.setRotation(new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), at.yaw), true);
-      car.body.setLinvel(at.t.clone().multiplyScalar(17.5), true);
+      car.body.setLinvel(at.t.clone().multiplyScalar(DRIVING.speed - 1.5), true);
     }
     race.cameraProgress = leader.progress - 4;
     race.world.step();
@@ -257,7 +322,7 @@ for (const mapId of ['desert', 'forest', 'volcano'] as const)
           trailerSpeed / 50 > leaderSpeed / 50 + 1,
           'the rear car must actually drive faster',
         );
-        assert.ok(peakBonus > 0.14 && peakBonus <= CATCH_UP.maxSpeedBonus);
+        assert.ok(peakBonus > 0.26 && peakBonus <= CATCH_UP.maxSpeedBonus);
         const gap = assisted.cars.get('leader')!.progress - assisted.cars.get('trailer')!.progress;
         assert.ok(gap < (bot ? 11 : 10), `14 m gap should close promptly: ${gap}`);
       } finally {

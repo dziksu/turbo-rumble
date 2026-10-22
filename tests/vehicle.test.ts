@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { before, test } from 'node:test';
 import { Quaternion, Vector3 } from 'three';
 import { Race, initPhysics } from '../shared/simulation.ts';
+import { DRIVING } from '../shared/driving.ts';
 import { VEHICLE_RIDE_HEIGHT } from '../shared/rules.ts';
 import type { MapId } from '../shared/maps.ts';
 import type { Car } from '../shared/entities.ts';
@@ -101,7 +102,7 @@ for (const mapId of ['forest', 'volcano'] as const)
               .addScaledVector(at.n, ((car.slot % 4) - 1.5) * 2.7)
               .setY(VEHICLE_RIDE_HEIGHT),
             at.yaw,
-            19,
+            DRIVING.speed,
           );
           car.progress = ramp.s + along;
         }
@@ -175,12 +176,13 @@ for (const mapId of ['desert', 'forest', 'volcano'] as const)
             .addScaledVector(at.n, ((car.slot % 4) - 1.5) * 2.4)
             .setY(VEHICLE_RIDE_HEIGHT),
           at.yaw + (group < 0 ? Math.PI : 0),
-          19,
+          DRIVING.speed,
         );
         car.progress = 80 - group * 4;
       }
       race.world.step();
-      const collisions = new Set<string>();
+      const collisions = new Set<string>(),
+        braked = new Set<string>();
       let peakSpeed = 0;
       for (let tick = 0; tick < 180; tick++) {
         step(race, tick >= 20);
@@ -188,7 +190,9 @@ for (const mapId of ['desert', 'forest', 'volcano'] as const)
           const p = car.body.translation(),
             v = car.body.linvel();
           assert.ok(car.alive && Number.isFinite(p.x + p.y + p.z + v.x + v.y + v.z));
-          peakSpeed = Math.max(peakSpeed, new Vector3().copy(v).length());
+          const speed = new Vector3().copy(v).length();
+          if (tick >= 20 && !car.reversing && speed < 1) braked.add(car.id);
+          peakSpeed = Math.max(peakSpeed, speed);
           assert.ok(peakSpeed < 45 && p.y > 0.2 && p.y < 4, 'collision solver remains bounded');
           race.world.contactPairsWith(car.body.collider(0), (other) => {
             if (other.parent() && handles.has(other.parent()!.handle))
@@ -207,8 +211,12 @@ for (const mapId of ['desert', 'forest', 'volcano'] as const)
           `${car.id} recovers after impact`,
         );
         assert.ok(
-          new Vector3().copy(car.body.linvel()).length() < 1,
-          `${car.id} can brake after impact`,
+          braked.has(car.id),
+          `${car.id} brakes to a near stop before reverse after impact`,
+        );
+        assert.ok(
+          new Vector3().copy(car.body.linvel()).length() < DRIVING.reverseSpeed + 0.5,
+          `${car.id} stays within the reverse speed limit after holding both buttons`,
         );
       }
       t.diagnostic(

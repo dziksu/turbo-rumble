@@ -3,6 +3,7 @@ import { before, test } from 'node:test';
 import RAPIER from '@dimforge/rapier3d-compat';
 import { Quaternion, Vector3 } from 'three';
 import { Race, initPhysics } from '../shared/simulation.ts';
+import { DRIVING } from '../shared/driving.ts';
 import { DEFAULT_SETTINGS, type MapId } from '../shared/maps.ts';
 before(initPhysics);
 
@@ -69,7 +70,7 @@ for (const mapId of ['forest', 'volcano'] as const) {
             new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), start.yaw),
             true,
           );
-          car.body.setLinvel(start.t.clone().multiplyScalar(19), true);
+          car.body.setLinvel(start.t.clone().multiplyScalar(DRIVING.speed), true);
           car.progress = ramp.s - ramp.length / 2 - 4;
           race.cameraProgress = car.progress;
           let highest = 0,

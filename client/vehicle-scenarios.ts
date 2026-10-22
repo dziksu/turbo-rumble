@@ -1,6 +1,7 @@
 // Dev-only fixtures for inspecting the same eight-body simulation used by the server.
 import { Quaternion, Vector3 } from 'three';
 import { Race } from '../shared/simulation.ts';
+import { DRIVING } from '../shared/driving.ts';
 import { VEHICLE_RIDE_HEIGHT } from '../shared/rules.ts';
 import type { MapId } from '../shared/maps.ts';
 
@@ -40,7 +41,10 @@ export function vehicleScenario(mapId: MapId, scenario: VehicleScenario) {
     const yaw = at.yaw + (opposing ? Math.PI : 0);
     car.body.setTranslation({ ...point, y: VEHICLE_RIDE_HEIGHT }, true);
     car.body.setRotation(new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), yaw), true);
-    car.body.setLinvel({ x: Math.sin(yaw) * 19, y: 0, z: Math.cos(yaw) * 19 }, true);
+    car.body.setLinvel(
+      { x: Math.sin(yaw) * DRIVING.speed, y: 0, z: Math.cos(yaw) * DRIVING.speed },
+      true,
+    );
     car.progress = progress + along;
     car.invulnerableUntil = Infinity;
   }

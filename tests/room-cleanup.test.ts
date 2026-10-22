@@ -49,7 +49,7 @@ function runtimeFixture(t: TestContext) {
     results.close();
     rmSync(folder, { recursive: true, force: true });
   });
-  return { config, registry, results, broadcast };
+  return { config, registry, results, broadcast, sockets };
 }
 
 test('empty rooms freeze every phase, including eight bots and finished physics, while results still persist', (t) => {
@@ -316,7 +316,7 @@ test('empty paused rooms still expire humans without stepping physics or promoti
 });
 
 test('map changes do not restart a disconnected player deadline, and race removal clears scoring queues', (t) => {
-  const { registry } = runtimeFixture(t);
+  const { registry, results } = runtimeFixture(t);
   const { room } = registry.create();
   room.emptySince = null;
   const absent = registry.join(room.code, 'Departing').session;
@@ -355,9 +355,9 @@ test('map changes do not restart a disconnected player deadline, and race remova
   t.mock.timers.tick(30_000);
   assert.equal(room.race.cars.has(online.playerId!), false);
   assert.deepEqual(
-    room.race.results,
+    results.latest()[0].results,
     finished,
-    'completed results survive later player expiration',
+    'saved results survive lobby return and later player expiration',
   );
 });
 
@@ -463,3 +463,83 @@ test(
     }
   },
 );
+
+test('final podium stays for five revealed seconds, then every player returns unready to the same lobby', (t) => {
+  const { registry, results, broadcast, sockets } = runtimeFixture(t);
+  const { room } = registry.create();
+  room.emptySince = null;
+  room.hosts.add('host');
+  sockets.sockets.adapter.rooms.set(room.code, new Set(['host']));
+  const sessions = [
+    registry.join(room.code, 'Winner').session,
+    registry.join(room.code, 'Runner up').session,
+  ];
+  for (const [index, session] of sessions.entries()) {
+    room.playerSockets.set(session.playerId!, `socket-${index}`);
+    registry.playerConnected(room, session.playerId!);
+    room.race.cars.get(session.playerId!)!.ready = true;
+  }
+  registry.command(room, { action: 'bot' });
+  const admin = room.race.adminId,
+    settings = { ...room.race.settings };
+  room.race.start();
+  room.race.finish();
+  const finalResults = [...room.race.results],
+    matchId = room.matchId;
+  const save = t.mock.method(results, 'save');
+  t.mock.timers.tick(999);
+  assert.equal(room.race.phase, 'finished');
+  assert.ok(
+    room.race.tick < room.race.summaryAt,
+    'impact reveal comes before the five-second podium',
+  );
+  assert.equal(room.saved, true);
+  assert.equal(save.mock.callCount(), 1);
+  t.mock.timers.tick(1);
+  assert.equal(room.race.tick, room.race.summaryAt);
+  assert.equal(room.race.snapshot(room.code).seconds, 5);
+  t.mock.timers.tick(4999);
+  assert.equal(room.race.phase, 'finished', 'do not dismiss the podium early');
+  t.mock.timers.tick(1);
+  assert.equal(room.race.phase, 'lobby');
+  assert.deepEqual(room.race.results, []);
+  assert.equal(room.race.cars.size, 3);
+  assert.equal(room.race.adminId, admin);
+  assert.deepEqual(room.race.settings, settings);
+  assert.ok(sessions.every((session) => registry.authenticate(session)));
+  assert.ok([...room.race.cars.values()].every((car) => car.ready === car.bot));
+  assert.equal(room.race.snapshot(room.code).canStart, false);
+  assert.equal(save.mock.callCount(), 1);
+  assert.equal(results.latest()[0].id, matchId);
+  assert.deepEqual(results.latest()[0].results, finalResults);
+  assert.ok(broadcast.mock.callCount() >= 2);
+  for (const car of room.race.cars.values()) if (!car.bot) car.ready = true;
+  registry.syncLobby(room);
+  assert.equal(room.race.phase, 'countdown');
+  assert.notEqual(room.matchId, matchId);
+  assert.equal(room.saved, false);
+});
+
+test('a failed result save keeps the final podium until persistence succeeds', (t) => {
+  const { registry, results } = runtimeFixture(t);
+  const { room } = registry.create();
+  room.emptySince = null;
+  registry.command(room, { action: 'bot' });
+  registry.command(room, { action: 'bot' });
+  room.race.finish();
+  const finished = [...room.race.results];
+  const save = results.save.bind(results);
+  const mockedSave = t.mock.method(results, 'save', () => {
+    throw new Error('Test database failure');
+  });
+  t.mock.method(console, 'error', () => {});
+  t.mock.timers.tick(6500);
+  assert.equal(room.saved, false);
+  assert.equal(room.race.phase, 'finished');
+  assert.deepEqual(room.race.results, finished);
+  mockedSave.mock.mockImplementation(save);
+  t.mock.timers.tick(40);
+  assert.equal(room.race.phase, 'lobby');
+  assert.deepEqual(results.latest()[0].results, finished);
+  assert.equal(results.latest().length, 1);
+});

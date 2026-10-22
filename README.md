@@ -21,9 +21,9 @@ Open **http://localhost:4317**, create a room and scan the QR code with your pho
 
 ## How to play
 
-- Acceleration is automatic. Steer left or right; press both directions to brake.
+- Acceleration is automatic. Steer left or right; press both directions to brake, then keep holding once stopped to reverse. Release to drive forward again.
 - Hold a turn to drift. Collect and use items, stay on the track and keep up with the shared camera.
-- Keyboard: **A/D** or **←/→** to steer, **Space** to use an item, **↓** to brake.
+- Keyboard: **A/D** or **←/→** to steer, **Space** to use an item, **↓** to brake and hold at a stop to reverse.
 - The host or first player chooses the map and rules. The countdown starts when everyone is ready.
 
 ## Development and hosting

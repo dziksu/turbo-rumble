@@ -3,8 +3,9 @@ import { clamp } from './physics-utils.ts';
 export const CATCH_UP = {
   startGap: 6,
   fullGap: 10,
-  maxSpeedBonus: 0.16,
-  riseRate: 3.5,
+  maxSpeedBonus: 0.3,
+  maxAccelerationBonus: 0.4,
+  riseRate: 6,
   fadeRate: 5,
 } as const;
 
