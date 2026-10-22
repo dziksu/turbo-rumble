@@ -11,6 +11,7 @@ import {
   type ClientToServerEvents,
   type ServerToClientEvents,
 } from '../shared/protocol.ts';
+import { isActivityHistory } from '../shared/activity.ts';
 import type { Session } from '../shared/types.ts';
 
 test('public activity follows real controllers and hosts, excludes bots and retains reserved room capacity', async () => {
@@ -50,6 +51,7 @@ test('public activity follows real controllers and hosts, excludes bots and reta
     });
     return socket;
   }
+  let peak = 0;
   async function expectStats(players: number, activeRooms: number, rooms: number) {
     const deadline = Date.now() + 2000;
     do {
@@ -60,7 +62,35 @@ test('public activity follows real controllers and hosts, excludes bots and reta
       const value: unknown = await response.json();
       assert.ok(isServerStats(value));
       const expected = { players, activeRooms, rooms, maxRooms: 3 };
-      if (JSON.stringify(value) === JSON.stringify(expected)) return;
+      if (JSON.stringify(value) === JSON.stringify(expected)) {
+        peak = Math.max(peak, players);
+        const historyResponse = await fetch(base + '/api/stats/history');
+        assert.equal(historyResponse.status, 200);
+        assert.equal(historyResponse.headers.get('cache-control'), 'no-store');
+        assert.equal(historyResponse.headers.get('x-robots-tag'), 'noindex, nofollow');
+        const history: unknown = await historyResponse.json();
+        assert.ok(isActivityHistory(history));
+        assert.equal(history.current.players, players);
+        assert.equal(history.current.activeRooms, activeRooms);
+        assert.equal(history.peak.players, peak);
+        assert.deepEqual(Object.keys(history).sort(), [
+          'bucketMs',
+          'current',
+          'generatedAt',
+          'peak',
+          'points',
+          'range',
+          'startedAt',
+        ]);
+        assert.deepEqual(Object.keys(history.current).sort(), [
+          'activeRooms',
+          'players',
+          'playingPlayers',
+        ]);
+        assert.ok(!JSON.stringify(history).includes('First human'));
+        assert.ok(!JSON.stringify(history).includes('token'));
+        return;
+      }
       if (Date.now() >= deadline) assert.deepEqual(value, expected);
       await new Promise((done) => setTimeout(done, 10));
     } while (Date.now() < deadline);
@@ -68,6 +98,8 @@ test('public activity follows real controllers and hosts, excludes bots and reta
   }
   try {
     await expectStats(0, 0, 0);
+    for (const query of ['range=365d', 'range[]=24h', 'range=24h&range=7d', 'range=__proto__'])
+      assert.equal((await fetch(base + '/api/stats/history?' + query)).status, 400);
     const first = await post('/api/rooms'),
       second = await post('/api/rooms');
     const playerA = await post('/api/join', { code: first.code, name: 'First human' });
@@ -81,6 +113,14 @@ test('public activity follows real controllers and hosts, excludes bots and reta
     const padA = await connect(playerA),
       padB = await connect(playerB);
     await expectStats(2, 1, 2);
+    const room = server.registry.rooms.get(first.code)!;
+    room.race.phase = 'racing';
+    const playing: unknown = await fetch(base + '/api/stats/history?range=7d').then((r) =>
+      r.json(),
+    );
+    assert.ok(isActivityHistory(playing));
+    assert.equal(playing.current.playingPlayers, 2); // The bot and host screen are excluded.
+    room.race.phase = 'lobby';
     const takeover = await connect(playerA);
     await expectStats(2, 1, 2);
     assert.equal(padA.connected, false);

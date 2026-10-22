@@ -1,6 +1,7 @@
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
+import { ActivityStore } from './activity-store.ts';
 import type { Result } from '../shared/types.ts';
 
 export interface SavedMatch {
@@ -10,12 +11,14 @@ export interface SavedMatch {
 }
 export class ResultsStore {
   private readonly db: DatabaseSync;
+  readonly activity: ActivityStore;
   constructor(dataDir: string) {
     mkdirSync(dataDir, { recursive: true });
     this.db = new DatabaseSync(resolve(dataDir, 'results.sqlite'));
     this.db.exec(
       'PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000; CREATE TABLE IF NOT EXISTS matches (id TEXT PRIMARY KEY, code TEXT NOT NULL, finished_at TEXT NOT NULL, results TEXT NOT NULL)',
     );
+    this.activity = new ActivityStore(this.db);
   }
   save(id: string, code: string, results: Result[]) {
     this.db

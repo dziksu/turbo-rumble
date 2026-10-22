@@ -19,6 +19,7 @@ const copy = {
       description:
         'Credits, asset sources and licenses for Turbo Rumble, including Kenney models, music, sound effects and the game’s noncommercial code license.',
     },
+    stats: { title: 'Activity — Turbo Rumble', description: 'Aggregate player activity.' },
     private: {
       title: 'Play with Your Crew — Turbo Rumble',
       description: 'One shared screen. Phones as controllers. Join your friends in Turbo Rumble.',
@@ -46,6 +47,10 @@ const copy = {
       description:
         'Autorzy, źródła i licencje Turbo Rumble: modele Kenney, muzyka, dźwięki i licencja kodu gry do użytku niekomercyjnego.',
     },
+    stats: {
+      title: 'Aktywność — Turbo Rumble',
+      description: 'Zbiorcze statystyki aktywności graczy.',
+    },
     private: {
       title: 'Zagraj ze swoją ekipą — Turbo Rumble',
       description: 'Jeden wspólny ekran. Telefony jako pady. Dołącz do znajomych w Turbo Rumble.',
@@ -68,9 +73,11 @@ export function pageMetadata(pathname: string, language: SiteLanguage = 'en', or
         ? 'author'
         : path === '/credits'
           ? 'credits'
-          : path === '/join' || path.startsWith('/host/')
-            ? 'private'
-            : 'missing';
+          : path === '/stats'
+            ? 'stats'
+            : path === '/join' || path.startsWith('/host/')
+              ? 'private'
+              : 'missing';
   const indexable = page === 'home' || page === 'author' || page === 'credits';
   return {
     ...copy[language][page],
@@ -94,6 +101,8 @@ function staticContent(page: ReturnType<typeof pageMetadata>['page']) {
     return '<main class="html-fallback"><h1>Benjamin Rast — Creator of Turbo Rumble</h1><p><a href="https://github.com/dziksu">GitHub: @dziksu</a> · <a href="https://rastwork.pl/">Creator’s website</a></p><p><a href="https://github.com/dziksu/turbo-rumble">Turbo Rumble source code</a> is available under PolyForm Noncommercial 1.0.0.</p><a href="/">Play Turbo Rumble</a></main>';
   if (page === 'credits')
     return '<main class="html-fallback"><h1>Turbo Rumble — Credits &amp; Licenses</h1><p>Original game code: <a href="https://polyformproject.org/licenses/noncommercial/1.0.0">PolyForm Noncommercial 1.0.0</a>. Third-party resources retain their own licenses.</p><p>Kenney models are CC0. The tire-skid recording by audible-edge (Tom Haigh), edited by qubodup, is CC BY 3.0. <a href="/assets/audio/SOURCE.md">Audio credits and changes</a>. Three.js and Socket.IO are MIT; Rapier is Apache 2.0; Bungee and Space Grotesk use SIL OFL.</p><p>Menu illustrations were generated with AI using the game’s models as references. <a href="/assets/cinematics/SOURCE.md">Illustration provenance</a>.</p><noscript><p>Enable JavaScript to view the full interactive credits page.</p></noscript><a href="/">Play Turbo Rumble</a></main>';
+  if (page === 'stats')
+    return '<main class="html-fallback"><h1>Aktywność graczy</h1><p>Włącz JavaScript, aby wyświetlić zbiorcze dane i wykresy.</p></main>';
   if (page === 'private')
     return '<main class="html-fallback"><h1>Turbo Rumble</h1><p>Enable JavaScript to host or join a game.</p><a href="/">Back to home</a></main>';
   return '<main class="html-fallback"><h1>Page not found</h1><a href="/">Play Turbo Rumble</a></main>';

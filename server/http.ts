@@ -1,3 +1,4 @@
+import { isActivityRange } from '../shared/activity.ts';
 import type { Express, ErrorRequestHandler } from 'express';
 import { networkInterfaces } from 'node:os';
 import { isRecord, type NetworkInfo } from '../shared/protocol.ts';
@@ -39,6 +40,19 @@ export function registerHttp(
       return;
     }
     res.json(registry.stats());
+  });
+  app.get('/api/stats/history', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    if (isClosing()) {
+      res.status(503).json({ error: 'Serwer jest zatrzymywany.' });
+      return;
+    }
+    const range = req.query.range ?? '24h';
+    if (!isActivityRange(range) || Object.keys(req.query).some((key) => key !== 'range')) {
+      res.status(400).json({ error: 'Wybierz zakres 24h, 7d lub 30d.' });
+      return;
+    }
+    res.json(results.activity.history(range, registry.activity()));
   });
   app.get('/api/info', (_req, res) => res.json(networkInfo(config)));
   app.get('/api/results', (_req, res) => res.json(results.latest()));

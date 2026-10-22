@@ -20,6 +20,8 @@ else if (import.meta.env.DEV && route === '/audio-check')
   void import('./audio-check.ts').then((m) => m.mountAudioCheck(app));
 else if (route.startsWith('/host/'))
   void hostPage(route.split('/')[2]).catch((e) => toast(e.message));
+else if (route.replace(/\/+$/, '') === '/stats')
+  void import('./pages/stats.ts').then((m) => m.statsPage());
 else if (route === '/author') void import('./pages/author.ts').then((m) => m.authorPage());
 else if (route === '/credits') void import('./pages/credits.ts').then((m) => m.creditsPage());
 else if (route === '/join') void joinPage();

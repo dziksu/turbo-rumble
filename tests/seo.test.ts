@@ -73,8 +73,9 @@ test('crawlers receive page content, canonical metadata and the real social imag
       assert.ok(body.includes(`rel="canonical" href="${SITE_URL}${path}"`));
       assert.ok(!body.includes('application/ld+json'));
     }
-    for (const path of ['/host/ABC234', '/join?code=ABC234']) {
+    for (const path of ['/host/ABC234', '/join?code=ABC234', '/stats', '/stats/']) {
       const page = await fetch(base + path);
+      assert.equal(page.status, 200);
       assert.equal(page.headers.get('x-robots-tag'), 'noindex, nofollow');
       assert.match(await page.text(), /name="robots" content="noindex, nofollow"/);
     }
@@ -83,8 +84,12 @@ test('crawlers receive page content, canonical metadata and the real social imag
     assert.equal(missing.headers.get('x-robots-tag'), 'noindex, nofollow');
     const sitemap = await fetch(base + '/sitemap.xml').then((r) => r.text());
     assert.equal((sitemap.match(/<loc>/g) ?? []).length, 3);
-    assert.ok(!sitemap.includes('/host/') && !sitemap.includes('/join'));
+    assert.ok(
+      !sitemap.includes('/host/') && !sitemap.includes('/join') && !sitemap.includes('/stats'),
+    );
+    assert.ok(!html.includes('/stats'));
     const robots = await fetch(base + '/robots.txt').then((r) => r.text());
+    assert.ok(robots.includes('Disallow: /stats'));
     assert.ok(robots.includes(`Sitemap: ${SITE_URL}/sitemap.xml`));
     assert.ok(readFileSync(resolve('README.md'), 'utf8').includes('](docs/gameplay.png)'));
   } finally {

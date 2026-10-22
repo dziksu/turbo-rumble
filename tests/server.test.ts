@@ -128,6 +128,7 @@ test('SQLite saves once, survives reopening and creates an integrity-checked liv
   const store = new ResultsStore(folder);
   try {
     store.save('match', 'ABC234', [result]);
+    store.activity.record({ players: 6, playingPlayers: 4, activeRooms: 1 });
     store.save('match', 'ABC234', [{ ...result, score: 0 }]);
     await backupResults(resolve(folder, 'results.sqlite'), resolve(folder, 'backup.sqlite'));
     assert.equal(store.latest().length, 1);
@@ -138,6 +139,10 @@ test('SQLite saves once, survives reopening and creates an integrity-checked liv
     const copied = new DatabaseSync(resolve(folder, 'backup.sqlite'), { readOnly: true });
     try {
       assert.equal(copied.prepare('SELECT COUNT(*) AS count FROM matches').get()?.count, 1);
+      assert.equal(
+        copied.prepare('SELECT peak_players FROM activity_summary').get()?.peak_players,
+        6,
+      );
     } finally {
       copied.close();
     }
@@ -148,6 +153,13 @@ test('SQLite saves once, survives reopening and creates an integrity-checked liv
     const reopened = new ResultsStore(folder);
     try {
       assert.equal(reopened.latest()[0].results[0].name, 'Winner');
+      const history = reopened.activity.history('24h', {
+        players: 0,
+        playingPlayers: 0,
+        activeRooms: 0,
+      });
+      assert.equal(history.peak.players, 6);
+      assert.equal(history.points[0].playingPlayers, 4);
     } finally {
       reopened.close();
     }

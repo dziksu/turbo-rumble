@@ -26,7 +26,11 @@ type GameSocket = Socket<
   SocketData
 >;
 
-export function registerRealtime(io: GameServer, registry: RoomRegistry) {
+export function registerRealtime(
+  io: GameServer,
+  registry: RoomRegistry,
+  activityChanged = () => {},
+) {
   const broadcast = (room: Room) => io.to(room.code).emit('state', room.race.snapshot(room.code));
   io.use((socket, next) => {
     const session = parseSession(socket.handshake.auth);
@@ -78,6 +82,7 @@ export function registerRealtime(io: GameServer, registry: RoomRegistry) {
       if (car) car.ready = ready;
       if (room.race.phase === 'finished' && ready) room.race.lobby();
       registry.syncLobby(room);
+      activityChanged();
       broadcast(room);
       if (typeof ack === 'function') ack();
     });
@@ -106,6 +111,7 @@ export function registerRealtime(io: GameServer, registry: RoomRegistry) {
         const removedSocket = registry.command(room, command);
         registry.syncLobby(room);
         if (removedSocket) io.sockets.sockets.get(removedSocket)?.disconnect(true);
+        activityChanged();
         broadcast(room);
         respond({ ok: true });
       } catch (error) {
@@ -128,9 +134,11 @@ export function registerRealtime(io: GameServer, registry: RoomRegistry) {
       }
       if (!io.sockets.adapter.rooms.get(room.code)?.size) room.emptySince ??= Date.now();
       registry.syncLobby(room);
+      activityChanged();
       broadcast(room);
     });
     registry.syncLobby(room);
+    activityChanged();
     socket.emit('session', { playerId: playerId ?? null });
     broadcast(room);
   });

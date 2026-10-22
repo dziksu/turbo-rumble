@@ -41,7 +41,15 @@ Progi dobrano przed tylną granicą kamery, która na badanych fragmentach toru 
 
 Zakończony mecz jest zapisywany raz pod UUID z `INSERT OR IGNORE`. Po sekundowym pokazaniu ostatniego trafienia podium pozostaje widoczne przez 5 sekund. Termin jest oparty o zegar symulacji serwera i przesyłany jako `seconds`, więc ponowne połączenie lub zmiana języka nie restartują odliczania. Pętla automatycznie przywraca cały pokój do lobby dopiero po zapisaniu wyniku w SQLite; zeruje gotowość ludzi, zachowuje skład, admina, ustawienia i sesje. Gracze ponownie potwierdzają gotowość przed kolejnym meczem. API pokazuje ostatnich 12 meczów. Po zatrzymaniu pętli zapis końcowy następuje przed zamknięciem Socket.IO; światy Rapier i SQLite są zwalniane dopiero po handlerach rozłączenia. `close()` jest idempotentne. SIGTERM ma 15-sekundowy limit procesu, a Compose 20-sekundowy okres zatrzymania.
 
-Pokoje, tokeny, pozycje i aktywne mecze żyją w pamięci. Restart je usuwa. Wolumen przechowuje tylko zakończone wyniki. Obecna architektura wymaga jednej repliki; Redis adapter do Socket.IO sam nie rozwiązałby współdzielenia światów fizyki.
+Pokoje, tokeny, pozycje i aktywne mecze żyją w pamięci. Restart je usuwa. Wolumen przechowuje zakończone wyniki oraz zbiorczą historię aktywności. Obecna architektura wymaga jednej repliki; Redis adapter do Socket.IO sam nie rozwiązałby współdzielenia światów fizyki.
+
+## Zbiorcza historia aktywności
+
+`server/activity-store.ts` zapisuje w tej samej bazie `results.sqlite` minutowe maksima liczby połączonych ludzi, ludzi w rozgrywce i aktywnych pokojów. Nie zapisuje nazw, adresów IP, kodów pokojów, identyfikatorów ani tokenów. Boty i ekrany hosta nie są graczami. Rozgrywka obejmuje fazy countdown/racing/segment z obecnym hostem; lobby, pauza i podium nie są rozgrywką. Zmiany połączeń zapisują się natychmiast, a dodatkowy pomiar co sekundę rejestruje zmiany faz. Zapis odbywa się tylko po zmianie liczb lub minuty, poza pętlą fizyki.
+
+`/api/stats/history` przyjmuje wyłącznie zakresy `24h`, `7d`, `30d`. Zwraca minutowe lub godzinowe maksima i rekord od początku pomiarów z czasem pierwszego wystąpienia. Brak pomiaru pozostaje luką; nie odtwarzamy fikcyjnej historii z zakończonych meczów. Minutowe dane są usuwane po 90 dniach, rekord i początek pomiarów pozostają. Istniejąca kopia SQLite obejmuje również te tabele.
+
+Widok `/stats` jest ładowany osobno i nie ma do niego linków w interfejsie ani wpisu w sitemapie. `robots.txt`, nagłówek `X-Robots-Tag` i metadane blokują indeksowanie. Nie jest to kontrola dostępu; API i widok udostępniają wyłącznie agregaty. Wykresy i daty używają strefy Europe/Warsaw. Maksima różnych liczników w jednym przedziale mogą wystąpić w różnych sekundach.
 
 ## Puste pokoje i ponowne połączenie
 

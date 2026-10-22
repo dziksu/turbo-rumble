@@ -30,13 +30,27 @@ export async function createGameServer(config: ServerConfig) {
   let closeFrontend: (() => Promise<void>) | undefined;
   app.disable('x-powered-by');
   app.use((req, res, next) => {
-    if (req.path.startsWith('/api/') || req.path.startsWith('/host/') || req.path === '/join')
+    if (
+      req.path.startsWith('/api/') ||
+      req.path.startsWith('/host/') ||
+      req.path === '/join' ||
+      req.path.replace(/\/+$/, '') === '/stats'
+    )
       res.setHeader('X-Robots-Tag', 'noindex, nofollow');
     next();
   });
   app.set('trust proxy', config.trustProxyHops);
   app.use(express.json({ limit: '4kb' }));
-  const broadcast = registerRealtime(io, registry);
+  const recordActivity = () => {
+    try {
+      results.activity.record(registry.activity());
+    } catch (error) {
+      console.error('Activity persistence failed', error);
+    }
+  };
+  recordActivity();
+  const activityTimer = setInterval(recordActivity, 1000);
+  const broadcast = registerRealtime(io, registry, recordActivity);
   registerHttp(app, config, registry, results, limiter, broadcast, () => closing);
   if (config.production) {
     const frontend = resolve(config.rootDir, 'dist');
@@ -84,6 +98,7 @@ export async function createGameServer(config: ServerConfig) {
       closePromise ??= (async () => {
         closing = true;
         runtime.stop();
+        clearInterval(activityTimer);
         // Keep physics and SQLite alive until Socket.IO has run all disconnect handlers and closed HTTP.
         await new Promise<void>((resolve) => {
           io.close(() => resolve());

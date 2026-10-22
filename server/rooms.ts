@@ -1,5 +1,6 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import { Race } from '../shared/simulation.ts';
+import type { ActivityCounts } from '../shared/activity.ts';
 import { MAX_PLAYERS } from '../shared/rules.ts';
 import type { Session } from '../shared/types.ts';
 import type { HostCommand, ServerStats } from '../shared/protocol.ts';
@@ -55,6 +56,17 @@ export class RoomRegistry {
       if (room.hosts.size || online) activeRooms++;
     }
     return { players, activeRooms, rooms: this.rooms.size, maxRooms: this.maxRooms };
+  }
+  activity(): ActivityCounts {
+    const { players, activeRooms } = this.stats();
+    let playingPlayers = 0;
+    for (const room of this.rooms.values()) {
+      if (!room.hosts.size || !['countdown', 'racing', 'segment'].includes(room.race.phase))
+        continue;
+      for (const car of room.race.cars.values())
+        if (!car.bot && car.connected && room.playerSockets.has(car.id)) playingPlayers++;
+    }
+    return { players, playingPlayers, activeRooms };
   }
   create(): { room: Room; session: Session } {
     if (this.rooms.size >= this.maxRooms)
