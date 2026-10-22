@@ -10,3 +10,6 @@ data
 .DS_Store
 docs/qa
 .agents
+
+# Coolify generates this deployment manifest; it is not application source.
+docker-compose.yaml
