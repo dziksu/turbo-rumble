@@ -1,0 +1,12 @@
+node_modules/
+dist/
+dist-server/
+data/
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# Local QA captures and generated reports; historical tracked evidence remains available.
+docs/qa/

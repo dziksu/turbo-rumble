@@ -1,0 +1,4 @@
+interface:
+  display_name: "Turbo Rumble Development"
+  short_description: "Rozwój gry, protokół i testy regresji"
+  default_prompt: "Użyj $turbo-rumble-development, aby zmienić lub zrecenzować kod Turbo Rumble i dobrać testy."

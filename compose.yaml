@@ -1,0 +1,21 @@
+services:
+  game:
+    build: .
+    image: turbo-rumble:local
+    init: true
+    restart: unless-stopped
+    ports:
+      - '${HOST_BIND:-127.0.0.1}:${GAME_PORT:-4320}:4317'
+    environment:
+      NODE_ENV: production
+      PORT: '4317'
+      DATA_DIR: /app/data
+      PUBLIC_URL: '${PUBLIC_URL:-}'
+      TRUST_PROXY_HOPS: '${TRUST_PROXY_HOPS:-0}'
+      MAX_ROOMS: '${MAX_ROOMS:-50}'
+    volumes:
+      - game-data:/app/data
+    stop_grace_period: 20s
+
+volumes:
+  game-data:

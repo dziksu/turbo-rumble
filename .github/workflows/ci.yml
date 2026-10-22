@@ -1,0 +1,36 @@
+name: Check game and container
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run build
+      - run: docker build -t turbo-rumble:ci .
+      - name: Run built container and test eight controllers
+        run: |
+          docker run -d --name turbo-rumble-ci --init -p 127.0.0.1:4318:4317 turbo-rumble:ci
+          health=starting
+          for attempt in {1..30}; do
+            health=$(docker inspect --format '{{.State.Health.Status}}' turbo-rumble-ci)
+            if [ "$health" = healthy ]; then break; fi
+            sleep 1
+          done
+          test "$health" = healthy
+          GAME_URL=http://localhost:4318 npm run smoke
+      - name: Container logs and cleanup
+        if: always()
+        run: |
+          docker logs turbo-rumble-ci || true
+          docker rm -f turbo-rumble-ci || true

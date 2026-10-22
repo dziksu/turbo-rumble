@@ -1,0 +1,4 @@
+interface:
+  display_name: "Turbo Rumble Coolify"
+  short_description: "Docker, trwałe wyniki i wdrożenie Coolify"
+  default_prompt: "Użyj $turbo-rumble-coolify, aby przygotować lub sprawdzić kontener i wdrożenie Turbo Rumble na Coolify."

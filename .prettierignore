@@ -1,0 +1,13 @@
+node_modules
+dist
+dist-server
+data
+package-lock.json
+public/vendor
+docs/qa
+docs/JAZDA-DRIFT-I-WYBUCHY.md
+docs/MAPA-XL-I-FIZYKA.md
+docs/PLAN-I-ODBIOR.md
+docs/SPECYFIKACJA-REFERENCYJNA.md
+docs/STEROWANIE-RECZNE.md
+docs/TESTY-AGENTOW-I-DZWIEK.md
