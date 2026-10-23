@@ -19,6 +19,10 @@ Node 24 (`.nvmrc`), `npm ci`, `npm run dev` on port 4317. `npm run check` covers
 
 For isolated integration QA, use a free `PORT` and temporary `DATA_DIR`; set `GAME_URL` for `npm run smoke` / `npm run playtest`. These scripts create rooms and drive eight network controllers. Never reuse an active user room without explicit intent. Keep the final development preview running and remove only temporary servers/containers you created.
 
+## Commit and push workflow
+
+When asked to commit **and push**, follow `docs/RELEASING.md`: review and stage explicit paths, then run `npm run release -- "type(scope): description"`. This local command owns the preliminary Conventional Commit, version/changelog preparation, release commit and tag push. Do not make a separate manual commit/push before or after it. Use `npm run release` without a message only for already recorded local commits after inspecting the state. A commit-only request does not authorize publishing. Never run releases from CI or Coolify; deployment remains a separate action.
+
 ## Invariants
 
 - Server-authoritative 50 Hz Rapier; 25 Hz snapshots. Validate untrusted payloads at the boundary in `shared/protocol.ts`.

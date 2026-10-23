@@ -1,5 +1,8 @@
 # syntax=docker/dockerfile:1
 FROM node:24.22.1-bookworm-slim AS build
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund

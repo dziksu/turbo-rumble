@@ -212,3 +212,7 @@ Dynamiczne cienie aktualizują się w każdej renderowanej klatce, po interpolac
 `/map-check` umożliwia porównanie obrazu z cieniami i bez nich oraz regulację ambient 0–200%. Są to wyłącznie kontrolki deweloperskie. `tests/scene-lighting.test.ts` sprawdza pokrycie wszystkich trzech torów i wysokiej scenerii, podążanie za wyścigiem, przełączanie map, limit tekstury, odświeżanie w każdej klatce i stały zakres głębokości oraz stabilność przy ruchu mniejszym niż teksel.
 
 Źródła doboru mechanizmów: [Three.js — shadows](https://threejs.org/manual/pages/shadows.html), [HemisphereLight](https://threejs.org/docs/pages/HemisphereLight.html), [LightShadow](https://threejs.org/docs/pages/LightShadow.html). Cienie punktowe wymagają sześciu widoków; obecny system używa jednego widoku kierunkowego. Nie dodaje SSAO/GTAO ani wielokaskadowych cieni, które wymagałyby dodatkowych przebiegów GPU.
+
+## Wersjonowanie i wydania lokalne
+
+`package.json` jest jedynym źródłem wersji. `shared/version.ts` udostępnia ją stopce menu i `/api/health`; build klienta i serwera osadza bieżący numer. `npm run release -- "feat: opis zmiany"` obsługuje lokalny commit i push: sprawdza gałąź main, historię i stan indeksu, uruchamia kontrole, zapisuje Conventional Commit i wywołuje semantic-release. Konfiguracja `.releaserc.json` generuje changelog, aktualizuje package/lock, formatuje changelog i buduje grę przed commitem wydania oraz publikacją tagu. Nie ma automatycznego uruchomienia w CI ani w Coolify. Szczegóły, reguły i odzyskiwanie po przerwaniu opisuje `docs/RELEASING.md`.

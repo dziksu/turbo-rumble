@@ -399,6 +399,12 @@
   color: #b6c2bf;
   font-size: 12px;
 }
+.game-version {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: #d4dfdb;
+}
 .author-main {
   max-width: 840px;
 }

@@ -1,3 +1,4 @@
+import { GAME_VERSION } from '../shared/version.ts';
 import { isActivityRange } from '../shared/activity.ts';
 import type { Express, ErrorRequestHandler } from 'express';
 import { networkInterfaces } from 'node:os';
@@ -29,9 +30,12 @@ export function registerHttp(
   isClosing: () => boolean,
 ) {
   app.get('/api/health', (_req, res) =>
-    res
-      .status(isClosing() ? 503 : 200)
-      .json({ ok: !isClosing(), game: 'Turbo Rumble', rooms: registry.rooms.size }),
+    res.status(isClosing() ? 503 : 200).json({
+      ok: !isClosing(),
+      game: 'Turbo Rumble',
+      version: GAME_VERSION,
+      rooms: registry.rooms.size,
+    }),
   );
   app.get('/api/stats', (_req, res) => {
     res.setHeader('Cache-Control', 'no-store');

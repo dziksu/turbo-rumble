@@ -1,5 +1,6 @@
 // Gettext-style source keys keep Polish templates readable and allow typed runtime messages.
 export const EN = {
+  'Historia zmian': 'Changelog',
   'TURBO RUMBLE / DANE ZBIORCZE': 'TURBO RUMBLE / AGGREGATE DATA',
   'Aktywność graczy': 'Player activity',
   Zakres: 'Period',

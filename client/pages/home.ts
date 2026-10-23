@@ -1,3 +1,4 @@
+import { GAME_VERSION } from '../../shared/version.ts';
 import { mountServerStats } from '../server-stats.ts';
 import { mountCinematicBackground } from '../cinematic-background.ts';
 import { mountLanguageSwitch } from '../i18n.ts';
@@ -120,6 +121,12 @@ export async function home() {
       <nav aria-label="Informacje o grze">
         <a href="/author">Autor</a><a href="/credits">Zasoby i licencje</a
         ><a class="repo-link" href="https://github.com/dziksu/turbo-rumble">Kod źródłowy ↗</a>
+        <a
+          class="game-version"
+          href="https://github.com/dziksu/turbo-rumble/blob/main/CHANGELOG.md"
+          title="Historia zmian"
+          >v${GAME_VERSION}</a
+        >
       </nav>
     </footer>
     <dialog id="rules" aria-labelledby="rules-title">

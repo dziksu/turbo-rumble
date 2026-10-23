@@ -1,6 +1,6 @@
 ---
 name: turbo-rumble-development
-description: Develop or review Turbo Rumble gameplay, TypeScript client/server code, phone controllers and multiplayer regression tests. Use within the Turbo Rumble project.
+description: Develop or review Turbo Rumble gameplay, TypeScript client/server code, phone controllers, multiplayer regression tests and local versioned commit/push workflows. Use within the Turbo Rumble project.
 ---
 
 # Turbo Rumble development
@@ -30,3 +30,11 @@ Find the repository by its `package.json` name `turbo-rumble`; on Benjamin's Mac
 Run `npm run check` and `npm run build`. For multiplayer changes, run an isolated server with temporary `DATA_DIR`, then `GAME_URL=http://localhost:<port> npm run smoke` or `npm run playtest`. Never point destructive QA at a room people are currently playing. Use meaningful regression tests in `tests/`; existing physics tests cover steering orientation, manual heading, ramps, all weapons and scoring.
 
 Use the available browser tool to verify visible UI changes in a real host and phone viewport. Dev-only `/handling-check` and `/audio-check` help reproduce effects. They are excluded from production routing. Record what was actually exercised, including limitations; do not call a network bot script a real-device test.
+
+## Local versioned commits and pushes
+
+When the user requests **commit and push** for Turbo Rumble, use the repository's local release command instead of making a plain commit/push. Read `docs/RELEASING.md`, review the scope, and stage explicit paths. Run `npm run release -- "feat(scope): describe the change"` (or the appropriate Conventional Commit type). The command runs checks, creates the preliminary local commit required by semantic-release, updates package/lock/changelog, builds with the new version, creates the release commit and pushes main plus its version tag. Run it before any manual final commit/push; do not duplicate its commits. For already recorded local commits, inspect state and use `npm run release` without a message. Do not invoke it for a commit-only request, from CI/Coolify, or without push authorization. On failure, inspect local/remote state before retrying; preserve published tags and never force-push. Deployment remains separately authorized.
+
+## Local versioned commits and pushes
+
+When the user requests **commit and push** for Turbo Rumble, use the repository's local release command instead of making a plain commit/push. Read `docs/RELEASING.md`, review the scope, and stage explicit paths. Run `npm run release -- "feat(scope): describe the change"` (or the appropriate Conventional Commit type). The command runs checks, creates the preliminary local commit required by semantic-release, updates package/lock/changelog, builds with the new version, creates the release commit and pushes main plus its version tag. Run it before any manual final commit/push; do not duplicate its commits. For already recorded local commits, inspect state and use `npm run release` without a message. Do not invoke it for a commit-only request, from CI/Coolify, or without push authorization. On failure, inspect local/remote state before retrying; preserve published tags and never force-push. Deployment remains separately authorized.

@@ -10,7 +10,7 @@ Create a room on the shared screen, then scan its QR code or enter the room code
 
 ## Run locally
 
-Requirements: **Node.js 24** and npm.
+Requirements: **Node.js 24.15 or newer** and npm.
 
 ```sh
 npm ci
@@ -37,6 +37,16 @@ npm run build && npm start    # production build and server
 ```
 
 [Architecture](docs/ARCHITEKTURA.md) · [Docker / Coolify](docs/COOLIFY.md). Run a single server replica; restarting ends active rooms. Completed results are stored in `DATA_DIR/results.sqlite`. The detailed technical docs are currently in Polish.
+
+## Versioned commits and releases
+
+For a commit **and push**, stage only the reviewed files, then run:
+
+```sh
+npm run release -- "feat: describe the change"
+```
+
+This local command checks the project, records the Conventional Commit, updates the package/lock versions and [changelog](CHANGELOG.md), rebuilds, and pushes a release commit with its `vX.Y.Z` tag. `feat` means minor, breaking changes mean major, and other Conventional Commit types mean patch. The first semantic release is 1.0.0. No release runs in CI or during deployment. Requirements and recovery: [Local releases](docs/RELEASING.md). The menu footer and health endpoint expose the package version.
 
 ## License and credits
 

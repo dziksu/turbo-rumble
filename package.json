@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=24.0.0"
+    "node": ">=24.15.0"
   },
   "scripts": {
     "dev": "tsx watch server/index.ts",
@@ -18,7 +18,10 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm test",
-    "backup": "node dist-server/backup.js"
+    "backup": "node dist-server/backup.js",
+    "release": "node --import tsx scripts/release.ts",
+    "release:preview": "node --import tsx scripts/release.ts --dry-run",
+    "release:prepare": "prettier --write CHANGELOG.md && npm run build"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "^0.19.0",
@@ -32,17 +35,26 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@semantic-release/changelog": "^7.0.0",
+    "@semantic-release/exec": "^7.1.0",
+    "@semantic-release/git": "^11.0.1",
     "@types/express": "^5.0.3",
     "@types/node": "^24.0.0",
     "@types/qrcode": "^1.5.5",
     "@types/three": "^0.180.0",
+    "conventional-changelog-conventionalcommits": "^9.3.1",
     "esbuild": "^0.25.10",
     "eslint": "^10.13.0",
     "prettier": "^3.9.10",
+    "semantic-release": "^25.0.9",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.72.0",
     "vite": "^7.1.7"
   },
-  "license": "PolyForm-Noncommercial-1.0.0"
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dziksu/turbo-rumble.git"
+  }
 }
