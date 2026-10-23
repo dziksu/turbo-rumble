@@ -211,6 +211,13 @@ export class RoomRegistry {
         });
         break;
       }
+      case 'transfer-admin': {
+        const target = room.race.cars.get(command.id);
+        if (!target || target.bot || !target.connected || !room.playerSockets.has(target.id))
+          throw new RoomError('Wybierz gracza, który jest teraz połączony.', 409);
+        room.race.adminId = target.id;
+        break;
+      }
       case 'remove':
         this.requireLobby(room, 'Graczy usuwasz w lobby.');
         removedSocket = this.removePlayer(room, command.id);

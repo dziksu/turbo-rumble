@@ -12,6 +12,7 @@ import { lobbyReadiness, playerReadiness } from '../lobby-readiness.ts';
 import { rankStandings } from '../standings.ts';
 import { waitingForSummary } from '../race-presentation.ts';
 import { resultsPodium } from '../results.ts';
+import { roomAdmin } from '../room-admin.ts';
 import { roomSettings } from '../room-settings.ts';
 import { MAPS, DEFAULT_SETTINGS } from '../../shared/maps.ts';
 import QRCode from 'qrcode';
@@ -32,8 +33,9 @@ let scene: GameScene | null = null,
   keyboardId: string | null = null,
   keyboardController: GameSocket | null = null;
 let updateSettings: ((state: Snapshot) => void) | null = null;
+let updateAdmin: ((state: Snapshot) => void) | null = null;
 async function hostCommand(
-  action: Exclude<HostCommand['action'], 'settings'>,
+  action: Exclude<HostCommand['action'], 'settings' | 'transfer-admin'>,
   id?: string,
 ): Promise<void> {
   if (!hostSocket?.connected) throw new Error(t('Brak połączenia z serwerem.'));
@@ -77,7 +79,7 @@ export async function hostPage(code: string, watch = false) {
   if (!watch) localStorage.setItem('turbo:host:' + code, JSON.stringify(session));
   if (location.hash) history.replaceState(null, '', location.pathname + location.search);
   document.body.className = 'host-page';
-  app.innerHTML = /* HTML */ `${header(`<div class="host-track"><span class="live-dot"></span> <span id="host-map-name">SUNDOWN CIRCUIT XL</span> <b id="host-map-index">01</b></div><div class="host-actions"><a class="button subtle room-share" id="share-room" href="/room/${code}" target="_blank" rel="noopener">${watch ? 'Dołącz jako kontroler' : 'Udostępnij pokój'}</a><span id="host-connection" class="connection">Łączenie…</span><button class="icon-button" id="sound-toggle" aria-label="Włącz dźwięk">♪</button><button class="icon-button" id="fullscreen" aria-label="Pełny ekran">⛶</button></div>`)}
+  app.innerHTML = /* HTML */ `${header(`<div class="host-track"><span class="live-dot"></span> <span id="host-map-name">SUNDOWN CIRCUIT XL</span> <b id="host-map-index">01</b></div><div class="host-actions"><span id="host-admin"></span><a class="button subtle room-share" id="share-room" href="/room/${code}" target="_blank" rel="noopener">${watch ? 'Dołącz jako kontroler' : 'Udostępnij pokój'}</a><span id="host-connection" class="connection">Łączenie…</span><button class="icon-button" id="sound-toggle" aria-label="Włącz dźwięk">♪</button><button class="icon-button" id="fullscreen" aria-label="Pełny ekran">⛶</button></div>`)}
     <main class="arena">
       <div class="game-viewport">
         <div id="game-world"></div>
@@ -181,7 +183,10 @@ export async function hostPage(code: string, watch = false) {
   });
   const socket = connectGame(session);
   hostSocket = socket;
-  if (!watch) updateSettings = roomSettings($('#host-settings'), socket, { host: true });
+  if (!watch) {
+    updateSettings = roomSettings($('#host-settings'), socket, { host: true });
+    updateAdmin = roomAdmin($('#host-admin'), socket, { host: true });
+  }
   const hostConnected = new Promise<void>((resolve) => socket.once('connect', resolve));
   socket.on('connect', () => {
     $('#host-connection').textContent = 'Online';
@@ -252,6 +257,7 @@ function renderHost(state: Snapshot | null) {
     '0',
   );
   updateSettings?.(state);
+  updateAdmin?.(state);
   const lobby = state.phase === 'lobby';
   const summaryPending = waitingForSummary(state);
   $('#lobby-panel').hidden = !lobby;
@@ -510,7 +516,7 @@ async function joinKeyboard(code: string) {
   });
   keyboardId = session.playerId!;
   keyboardController = socket;
-  await new Promise<void>((resolve) => socket.emit('ready', true, () => resolve()));
+  if (current) renderHost(current);
   const held = new Set<string>();
   const sync = () =>
     input.set(
@@ -552,6 +558,5 @@ async function joinKeyboard(code: string) {
       if (current) renderHost(current);
     }
   });
-  socket.on('connect', () => socket.emit('ready', true));
-  toast('Klawiatura gotowa: A / D, spacja = przedmiot, ↓ = hamulec / cofanie.');
+  toast('Klawiatura dodana. Kliknij gotowość, gdy chcesz grać.');
 }

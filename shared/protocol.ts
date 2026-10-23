@@ -3,7 +3,7 @@ import type { Input, ConnectionSession, Snapshot } from './types.ts';
 
 export type HostCommand =
   | { action: 'start' | 'lobby' | 'bot' }
-  | { action: 'remove'; id: string }
+  | { action: 'remove' | 'transfer-admin'; id: string }
   | { action: 'settings'; settings: RaceSettings };
 export type CommandResult = { ok: true } | { ok: false; error: string };
 export interface ClientToServerEvents {
@@ -116,7 +116,12 @@ export function parseHostCommand(value: unknown): HostCommand | null {
   }
   if (value.action === 'start' || value.action === 'lobby' || value.action === 'bot')
     return { action: value.action };
-  if (value.action === 'remove' && typeof value.id === 'string' && value.id.length > 0)
-    return { action: 'remove', id: value.id };
+  if (
+    (value.action === 'remove' || value.action === 'transfer-admin') &&
+    typeof value.id === 'string' &&
+    value.id.length > 0 &&
+    value.id.length <= 128
+  )
+    return { action: value.action, id: value.id };
   return null;
 }

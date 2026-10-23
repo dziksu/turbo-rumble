@@ -1,5 +1,16 @@
 // Gettext-style source keys keep Polish templates readable and allow typed runtime messages.
 export const EN = {
+  'Administracja pokoju': 'Room admin',
+  'Przekaż administratora': 'Transfer admin',
+  'Administrator: {name}': 'Admin: {name}',
+  'Przekazanie roli nie przerywa gry. Nowy administrator przejmuje zarządzanie pokojem.':
+    'Transferring the role keeps the game running. The new admin takes over room management.',
+  'Powrót do lobby kończy bieżący mecz dla całej ekipy.':
+    'Returning to the lobby ends the current match for everyone.',
+  'Zakończ grę i wróć do lobby': 'End game and return to lobby',
+  'Wybierz gracza, który jest teraz połączony.': 'Choose a player who is connected now.',
+  'Klawiatura dodana. Kliknij gotowość, gdy chcesz grać.':
+    'Keyboard added. Click ready when you want to play.',
   'JEDEN POKÓJ. CAŁA EKIPA.': 'ONE ROOM. THE WHOLE CREW.',
   'ZAPROSZENIE DO GRY': 'YOU ARE INVITED',
   'Wybierz, jak dołączasz.': 'Choose how to join.',

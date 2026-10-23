@@ -7,6 +7,7 @@ import {
   translateMessage,
 } from '../i18n.ts';
 import { lobbyReadiness } from '../lobby-readiness.ts';
+import { roomAdmin } from '../room-admin.ts';
 import { roomSettings } from '../room-settings.ts';
 import { controllerLobbyMode, waitingForSummary } from '../race-presentation.ts';
 import '../controller-lobby.css';
@@ -44,6 +45,7 @@ export function controller(session: Session) {
         Jestem gotowy <span>✓</span>
       </button>
     </div>
+    <section id="pad-admin"></section>
     <section id="pad-settings"></section>
     <main class="pad-controls" id="pad-controls">
       <section class="direction-controls">
@@ -72,6 +74,7 @@ export function controller(session: Session) {
   const socket = connectGame(session),
     input = createInput(socket);
   const updateSettings = roomSettings($('#pad-settings'), socket, { playerId: session.playerId! });
+  const updateAdmin = roomAdmin($('#pad-admin'), socket, { playerId: session.playerId! });
   let readyPending = false,
     ready = false,
     latest: Snapshot | null = null,
@@ -174,6 +177,7 @@ export function controller(session: Session) {
   const render = (state: Snapshot) => {
     latest = state;
     updateSettings(state);
+    updateAdmin(state);
     const car = state.cars.find((c) => c.id === session.playerId);
     if (!car) return;
     document.documentElement.style.setProperty('--player', car.color);

@@ -44,7 +44,6 @@ export function roomSettings(
         <header class="controller-settings-header"><div><span id="admin-badge"></span><h2 id="settings-dialog-title">Ustawienia spotkania</h2><p id="settings-feedback" role="alert" hidden></p></div><button id="close-settings" type="button" aria-label="Zamknij" autofocus>×</button></header>
         <main class="controller-settings-content"><p id="settings-dialog-help">Ustaw trasę, zasady i boty. Zmiany widzi cała ekipa.</p>${fields}
           <section class="controller-bots" id="controller-bots" aria-labelledby="settings-bots-title"><div class="settings-bots-heading"><h3 id="settings-bots-title">Boty w pokoju</h3><button class="button subtle" id="admin-bot" type="button">+ Bot</button></div><p id="settings-bots-count"></p><div id="settings-bot-list"></div></section>
-          <div class="settings-admin-tools"><button class="button subtle" id="admin-lobby" type="button">Wróć do lobby</button></div>
         </main>
       </dialog>`;
   bindTranslations(container);
@@ -112,7 +111,6 @@ export function roomSettings(
     if (!host) {
       const admin = canEdit(state),
         botButton = container.querySelector<HTMLButtonElement>('#admin-bot')!,
-        lobby = container.querySelector<HTMLButtonElement>('#admin-lobby')!,
         botList = container.querySelector<HTMLElement>('#settings-bot-list')!,
         bots = state.cars.filter((car) => car.bot);
       container.querySelector('#settings-button-label')!.textContent = admin
@@ -128,8 +126,6 @@ export function roomSettings(
         { count: bots.length, players: state.cars.length },
       );
       botButton.disabled = !editable || saving || state.cars.length >= 8 || !socket.connected;
-      lobby.hidden = !admin || state.phase !== 'finished';
-      lobby.disabled = !editable || saving || !socket.connected;
       const nextBots =
         `${getLanguage()}:${admin}:` + bots.map((bot) => `${bot.id}:${bot.name}`).join('|');
       if (nextBots !== botSignature) {
@@ -233,8 +229,6 @@ export function roomSettings(
     container.querySelector<HTMLButtonElement>('#close-settings')!.onclick = () => dialog.close();
     container.querySelector<HTMLButtonElement>('#admin-bot')!.onclick = () =>
       void runCommand({ action: 'bot' });
-    container.querySelector<HTMLButtonElement>('#admin-lobby')!.onclick = () =>
-      void runCommand({ action: 'lobby' });
   }
   const refresh = () => {
     if (latest) render(latest);
