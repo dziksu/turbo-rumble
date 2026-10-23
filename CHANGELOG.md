@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0](https://github.com/dziksu/turbo-rumble/compare/v1.1.0...v1.2.0) (2026-10-23)
+
+### Features
+
+- **frost:** preserve speed and lock steering with icy car visuals ([98631ab](https://github.com/dziksu/turbo-rumble/commit/98631ab51b9058d506234cbd55c6214e0eac28b3))
+
 ## [1.1.0](https://github.com/dziksu/turbo-rumble/compare/v1.0.0...v1.1.0) (2026-10-23)
 
 ### Features
