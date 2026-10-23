@@ -1,8 +1,8 @@
 import { io, type Socket } from 'socket.io-client';
 import type { ClientToServerEvents, ServerToClientEvents } from '../../shared/protocol.ts';
-import type { Input, Session } from '../../shared/types.ts';
+import type { Input, ConnectionSession } from '../../shared/types.ts';
 export type GameSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
-export const connectGame = (auth: Session): GameSocket => io({ auth });
+export const connectGame = (auth: ConnectionSession): GameSocket => io({ auth });
 export function createInput(socket: GameSocket) {
   let seq = 0,
     actionSeq = 0,

@@ -46,7 +46,7 @@ export function registerRealtime(
     const { room, playerId, host } = socket.data;
     void socket.join(room.code);
     const wasEmpty = room.emptySince !== null;
-    room.emptySince = null;
+    if (host || playerId) room.emptySince = null;
     const ownsController = () => !!playerId && room.playerSockets.get(playerId) === socket.id;
     if (host) {
       room.hosts.add(socket.id);
@@ -132,15 +132,20 @@ export function registerRealtime(
         room.playerSockets.delete(playerId);
         registry.playerDisconnected(room, playerId);
       }
-      if (!io.sockets.adapter.rooms.get(room.code)?.size) room.emptySince ??= Date.now();
+      if (!room.hosts.size && !room.playerSockets.size) room.emptySince ??= Date.now();
+      if (host || playerId) {
+        registry.syncLobby(room);
+        activityChanged();
+        broadcast(room);
+      }
+    });
+    if (host || playerId) {
       registry.syncLobby(room);
       activityChanged();
-      broadcast(room);
-    });
-    registry.syncLobby(room);
-    activityChanged();
+    }
     socket.emit('session', { playerId: playerId ?? null });
-    broadcast(room);
+    if (host || playerId) broadcast(room);
+    else socket.emit('state', room.race.snapshot(room.code));
   });
   return broadcast;
 }

@@ -75,7 +75,10 @@ export function pageMetadata(pathname: string, language: SiteLanguage = 'en', or
           ? 'credits'
           : path === '/stats'
             ? 'stats'
-            : path === '/join' || path.startsWith('/host/')
+            : path === '/join' ||
+                path.startsWith('/host/') ||
+                path.startsWith('/room/') ||
+                path.startsWith('/watch/')
               ? 'private'
               : 'missing';
   const indexable = page === 'home' || page === 'author' || page === 'credits';

@@ -7,6 +7,7 @@ import './cinematic-home.css';
 import { app, toast } from './core/dom.ts';
 import { home } from './pages/home.ts';
 import { joinPage } from './pages/join.ts';
+import { roomPage } from './pages/room.ts';
 import { hostPage } from './pages/host.ts';
 
 const route = location.pathname;
@@ -18,6 +19,10 @@ else if (import.meta.env.DEV && route === '/handling-check')
   void import('./handling-check.ts').then((m) => m.mountHandlingCheck(app));
 else if (import.meta.env.DEV && route === '/audio-check')
   void import('./audio-check.ts').then((m) => m.mountAudioCheck(app));
+else if (route.startsWith('/room/'))
+  void roomPage(route.split('/')[2]).catch((e: Error) => toast(e.message));
+else if (route.startsWith('/watch/'))
+  void hostPage(route.split('/')[2], true).catch((e: Error) => toast(e.message));
 else if (route.startsWith('/host/'))
   void hostPage(route.split('/')[2]).catch((e) => toast(e.message));
 else if (route.replace(/\/+$/, '') === '/stats')

@@ -2,7 +2,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { Race } from '../shared/simulation.ts';
 import type { ActivityCounts } from '../shared/activity.ts';
 import { MAX_PLAYERS } from '../shared/rules.ts';
-import type { Session } from '../shared/types.ts';
+import type { Session, ConnectionSession } from '../shared/types.ts';
 import type { HostCommand, ServerStats } from '../shared/protocol.ts';
 
 export interface Room {
@@ -115,9 +115,10 @@ export class RoomRegistry {
     room.disconnectedSince.set(id, Date.now());
     return { room, session: { code, token: key, playerId: id, role: 'player' } };
   }
-  authenticate(session: Session) {
+  authenticate(session: ConnectionSession) {
     const room = this.rooms.get(session.code);
     if (!room) return null;
+    if (session.role === 'spectator') return { room, host: false, playerId: undefined };
     this.expireDisconnected(room);
     if (session.role === 'host' && session.token === room.hostToken)
       return { room, host: true, playerId: undefined };

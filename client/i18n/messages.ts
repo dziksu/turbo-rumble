@@ -1,5 +1,29 @@
 // Gettext-style source keys keep Polish templates readable and allow typed runtime messages.
 export const EN = {
+  'JEDEN POKÓJ. CAŁA EKIPA.': 'ONE ROOM. THE WHOLE CREW.',
+  'ZAPROSZENIE DO GRY': 'YOU ARE INVITED',
+  'Wybierz, jak dołączasz.': 'Choose how to join.',
+  'Oglądaj rozgrywkę': 'Watch live race',
+  'Dołącz jako kontroler': 'Join as controller',
+  'Udostępnij pokój': 'Share room',
+  'Podgląd na żywo na komputerze, telewizorze lub telefonie.':
+    'Watch live on a computer, TV or phone.',
+  'Steruj swoim autem na tym urządzeniu.': 'Control your car on this device.',
+  'TELEFON JAKO PAD': 'PHONE AS CONTROLLER',
+  'Zeskanuj i graj.': 'Scan and play.',
+  'Zeskanuj kod QR aparatem telefonu, aby otworzyć kontroler.':
+    'Scan the QR code with your phone camera to open the controller.',
+  'Miejsca w pokoju: {players}/8': 'Room slots: {players}/8',
+  'Wszystkie miejsca są zajęte. Możesz oglądać lub wrócić na swój zapisany kontroler.':
+    'All slots are taken. You can watch or return to your saved controller.',
+  'Wyścig trwa. Oglądaj teraz, wróć na swój kontroler lub zajmij nowe miejsce w lobby.':
+    'The race is on. Watch now, return to your controller or take a new slot in the lobby.',
+  'Nowy gracz zajmuje miejsce dopiero po podaniu pseudonimu.':
+    'New players only take a slot after entering a nickname.',
+  'Otwórz na telefonie · {address}': 'Open on your phone · {address}',
+  'Oglądasz pokój. Wyścig rozpoczyna host i gracze.':
+    'You are watching. The host and players start the race.',
+
   'Historia zmian': 'Changelog',
   'TURBO RUMBLE / DANE ZBIORCZE': 'TURBO RUMBLE / AGGREGATE DATA',
   'Aktywność graczy': 'Player activity',

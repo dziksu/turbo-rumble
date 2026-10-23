@@ -1,5 +1,5 @@
 import { MAPS, type RaceSettings } from './maps.ts';
-import type { Input, Session, Snapshot } from './types.ts';
+import type { Input, ConnectionSession, Snapshot } from './types.ts';
 
 export type HostCommand =
   | { action: 'start' | 'lobby' | 'bot' }
@@ -15,6 +15,11 @@ export interface ClientToServerEvents {
 export interface ServerToClientEvents {
   state: (state: Snapshot) => void;
   session: (session: { playerId: string | null }) => void;
+}
+export interface RoomInfo {
+  code: string;
+  phase: Snapshot['phase'];
+  players: number;
 }
 export interface NetworkInfo {
   localUrl: string;
@@ -65,7 +70,14 @@ export function isInput(value: unknown): value is Input {
     typeof value.right === 'boolean'
   );
 }
-export function parseSession(value: unknown): Session | null {
+export function parseSession(value: unknown): ConnectionSession | null {
+  if (
+    isRecord(value) &&
+    typeof value.code === 'string' &&
+    /^[A-Z2-9]{6}$/.test(value.code) &&
+    value.role === 'spectator'
+  )
+    return { code: value.code, role: 'spectator' };
   if (
     !isRecord(value) ||
     typeof value.code !== 'string' ||

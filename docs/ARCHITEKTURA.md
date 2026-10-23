@@ -216,3 +216,9 @@ Dynamiczne cienie aktualizują się w każdej renderowanej klatce, po interpolac
 ## Wersjonowanie i wydania lokalne
 
 `package.json` jest jedynym źródłem wersji. `shared/version.ts` udostępnia ją stopce menu i `/api/health`; build klienta i serwera osadza bieżący numer. `npm run release -- "feat: opis zmiany"` obsługuje lokalny commit i push: sprawdza gałąź main, historię i stan indeksu, uruchamia kontrole, zapisuje Conventional Commit i wywołuje semantic-release. Konfiguracja `.releaserc.json` generuje changelog, aktualizuje package/lock, formatuje changelog i buduje grę przed commitem wydania oraz publikacją tagu. Nie ma automatycznego uruchomienia w CI ani w Coolify. Szczegóły, reguły i odzyskiwanie po przerwaniu opisuje `docs/RELEASING.md`.
+
+## Publiczne zaproszenie i widzowie
+
+`/room/:code` i link `/join?code=…` pokazują wybór podglądu lub kontrolera oraz QR prowadzący bezpośrednio do `/join?code=…&mode=controller`. `/host/:code` bez zapisanej sesji hosta przekierowuje do zaproszenia. Link „Share room” zawiera tylko kod; nigdy token ani fragment hosta. Publiczne GET `/api/rooms/:code` zwraca wyłącznie kod, fazę i liczbę zajętych miejsc.
+
+`/watch/:code` korzysta ze wspólnego renderera ekranu wyścigu, ale uwierzytelnia Socket.IO osobną rolą `spectator`, bez tokenu. Kod daje dostęp do publicznego podglądu, nie do komend hosta ani wejścia gracza. Widz nie ma samochodu, gotowości, admina ani wpływu na licznik aktywnych graczy; jego połączenie nie uruchamia automatycznego startu i nie wznawia wyścigu. Widzowie nie przedłużają życia pustego pokoju, a wygaśnięcie rozłącza również ich sockety. Rozłączenie hosta nadal pauzuje wyścig.

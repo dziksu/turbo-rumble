@@ -17,7 +17,8 @@ export async function api<T>(path: string, body?: unknown): Promise<T> {
 }
 export function safeSession(key: string): Session | null {
   try {
-    return parseSession(JSON.parse(localStorage.getItem(key) ?? 'null'));
+    const session = parseSession(JSON.parse(localStorage.getItem(key) ?? 'null'));
+    return session?.role === 'spectator' ? null : session;
   } catch {
     return null;
   }

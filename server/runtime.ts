@@ -34,7 +34,10 @@ export function startRuntime(
       if (registry.expireDisconnected(room, now)) broadcast(room);
       // Skip every phase, including finished: even a settled race still steps Rapier.
       if (room.emptySince !== null) {
-        if (now - room.emptySince >= config.roomTtlMs) registry.dispose(room.code);
+        if (now - room.emptySince >= config.roomTtlMs) {
+          io.in(room.code).disconnectSockets(true);
+          registry.dispose(room.code);
+        }
         continue;
       }
       room.race.step();

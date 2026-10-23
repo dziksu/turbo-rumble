@@ -124,6 +124,11 @@ export interface Session {
   playerId?: string;
   role: 'host' | 'player';
 }
+export interface SpectatorSession {
+  code: string;
+  role: 'spectator';
+}
+export type ConnectionSession = Session | SpectatorSession;
 export const COLORS = [
   '#ffbd43',
   '#41d9cb',

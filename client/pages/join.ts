@@ -1,10 +1,15 @@
 import { mountLanguageSwitch, onLanguageChange, translateMessage } from '../i18n.ts';
 import { app, $, header } from '../core/dom.ts';
 import { api, safeSession } from '../core/api.ts';
+import { roomPage } from './room.ts';
 import { controller } from './controller.ts';
 import type { Session } from '../../shared/types.ts';
 export async function joinPage() {
   const code = new URLSearchParams(location.search).get('code')?.toUpperCase() ?? '';
+  if (code && new URLSearchParams(location.search).get('mode') !== 'controller') {
+    await roomPage(code);
+    return;
+  }
   const saved = code ? safeSession('turbo:player:' + code) : null;
   if (saved) {
     controller(saved);

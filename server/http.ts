@@ -58,6 +58,15 @@ export function registerHttp(
     }
     res.json(results.activity.history(range, registry.activity()));
   });
+  app.get('/api/rooms/:code', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const room = registry.rooms.get(req.params.code.toUpperCase());
+    if (!room) {
+      res.status(404).json({ error: 'Nie ma takiego pokoju. Sprawdź kod na ekranie hosta.' });
+      return;
+    }
+    res.json({ code: room.code, phase: room.race.phase, players: room.race.cars.size });
+  });
   app.get('/api/info', (_req, res) => res.json(networkInfo(config)));
   app.get('/api/results', (_req, res) => res.json(results.latest()));
   app.post(['/api/rooms', '/api/join'], (req, res, next) => {

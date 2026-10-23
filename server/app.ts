@@ -33,6 +33,8 @@ export async function createGameServer(config: ServerConfig) {
     if (
       req.path.startsWith('/api/') ||
       req.path.startsWith('/host/') ||
+      req.path.startsWith('/room/') ||
+      req.path.startsWith('/watch/') ||
       req.path === '/join' ||
       req.path.replace(/\/+$/, '') === '/stats'
     )

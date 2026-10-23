@@ -2805,3 +2805,82 @@ dialog h2 {
 .credits-main ul {
   padding-left: 22px;
 }
+
+/* Public invitation and read-only race screen. */
+.room-main {
+  max-width: 1050px;
+  margin: 0 auto;
+  padding: clamp(24px, 5vw, 64px) 24px;
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+.room-main .join-card {
+  width: auto;
+  max-width: none;
+  margin-top: 0;
+  padding: clamp(24px, 4vw, 44px);
+}
+.room-choice h1 {
+  font-size: clamp(25px, 3vw, 38px);
+  line-height: 1.2;
+}
+.room-code strong {
+  display: block;
+  font-size: 32px;
+  letter-spacing: 0.16em;
+  color: var(--ink, #19293a);
+}
+.room-choice .button {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+.room-choice #room-options > p {
+  font-size: 14px;
+  margin: 8px 0 16px;
+}
+.room-home {
+  display: inline-block;
+  margin-top: 20px;
+}
+.room-qr {
+  text-align: center;
+}
+.room-qr img {
+  display: block;
+  width: min(260px, 100%);
+  height: auto;
+  aspect-ratio: 1;
+  margin: 22px auto;
+  border-radius: 12px;
+}
+.room-share {
+  white-space: nowrap;
+  font-size: 12px;
+}
+@media (max-width: 760px) {
+  .room-main {
+    grid-template-columns: 1fr;
+    padding: 24px 16px;
+  }
+  .room-share {
+    padding: 8px;
+    font-size: 10px;
+  }
+}
+
+.room-choice .secondary {
+  background: #19293a;
+  color: #fffaf0;
+  box-shadow: 0 3px 0 #0e1925;
+}
+.room-main .eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+.room-main .room-code {
+  margin-bottom: 20px;
+}

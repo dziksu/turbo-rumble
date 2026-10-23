@@ -15,15 +15,17 @@ import { resultsPodium } from '../results.ts';
 import { roomSettings } from '../room-settings.ts';
 import { MAPS, DEFAULT_SETTINGS } from '../../shared/maps.ts';
 import QRCode from 'qrcode';
+import { roomLinks } from '../core/room-links.ts';
 import { app, $, header, toast } from '../core/dom.ts';
 import { api, safeSession } from '../core/api.ts';
 import { connectGame, createInput, type GameSocket } from '../core/network.ts';
 import { getScene } from '../core/scene.ts';
 import { Sound } from '../audio.ts';
 import type { GameScene } from '../scene.ts';
-import { type Session, type Snapshot } from '../../shared/types.ts';
-import type { HostCommand, NetworkInfo } from '../../shared/protocol.ts';
+import { type Session, type ConnectionSession, type Snapshot } from '../../shared/types.ts';
+import type { HostCommand } from '../../shared/protocol.ts';
 const sound = new Sound();
+let spectator = false;
 let scene: GameScene | null = null,
   current: Snapshot | null = null,
   hostSocket: GameSocket | null = null,
@@ -54,34 +56,28 @@ async function returnToLobby() {
     button.disabled = false;
   }
 }
-export async function hostPage(code: string) {
-  const fragment = new URLSearchParams(location.hash.slice(1)),
-    stored = safeSession('turbo:host:' + code);
-  const session: Session | null = fragment.get('key')
-    ? { code, token: fragment.get('key')!, role: 'host' }
-    : stored;
-  if (!session) {
-    app.innerHTML = /* HTML */ `${header()}
-      <main class="error-page">
-        <h1>To jest ekran hosta.</h1>
-        <p id="host-error-instruction">
-          ${t('Aby grać telefonem, dołącz kodem {code}.', { code })}
-        </p>
-        <a class="button primary" href="/join?code=${code}">Otwórz pad →</a
-        ><a href="/">Wróć na stronę główną</a>
-      </main>`;
-    mountLanguageSwitch(app);
-    onLanguageChange(() => {
-      $('#host-error-instruction').textContent = t('Aby grać telefonem, dołącz kodem {code}.', {
-        code,
-      });
-    });
+export async function hostPage(code: string, watch = false) {
+  code = code.toUpperCase();
+  if (!/^[A-Z2-9]{6}$/.test(code)) {
+    location.replace('/join');
     return;
   }
-  localStorage.setItem('turbo:host:' + code, JSON.stringify(session));
+  spectator = watch;
+  const fragment = new URLSearchParams(location.hash.slice(1)),
+    stored = safeSession('turbo:host:' + code);
+  const session: ConnectionSession | null = watch
+    ? { code, role: 'spectator' }
+    : fragment.get('key')
+      ? { code, token: fragment.get('key')!, role: 'host' }
+      : stored;
+  if (!session) {
+    location.replace('/room/' + code);
+    return;
+  }
+  if (!watch) localStorage.setItem('turbo:host:' + code, JSON.stringify(session));
   if (location.hash) history.replaceState(null, '', location.pathname + location.search);
   document.body.className = 'host-page';
-  app.innerHTML = /* HTML */ `${header(`<div class="host-track"><span class="live-dot"></span> <span id="host-map-name">SUNDOWN CIRCUIT XL</span> <b id="host-map-index">01</b></div><div class="host-actions"><span id="host-connection" class="connection">Łączenie…</span><button class="icon-button" id="sound-toggle" aria-label="Włącz dźwięk">♪</button><button class="icon-button" id="fullscreen" aria-label="Pełny ekran">⛶</button></div>`)}
+  app.innerHTML = /* HTML */ `${header(`<div class="host-track"><span class="live-dot"></span> <span id="host-map-name">SUNDOWN CIRCUIT XL</span> <b id="host-map-index">01</b></div><div class="host-actions"><a class="button subtle room-share" id="share-room" href="/room/${code}" target="_blank" rel="noopener">${watch ? 'Dołącz jako kontroler' : 'Udostępnij pokój'}</a><span id="host-connection" class="connection">Łączenie…</span><button class="icon-button" id="sound-toggle" aria-label="Włącz dźwięk">♪</button><button class="icon-button" id="fullscreen" aria-label="Pełny ekran">⛶</button></div>`)}
     <main class="arena">
       <div class="game-viewport">
         <div id="game-world"></div>
@@ -106,7 +102,11 @@ export async function hostPage(code: string) {
             <img id="join-qr" alt="Zeskanuj, aby dołączyć telefonem" />
             <div>
               <small>KOD POKOJU</small><strong>${code}</strong
-              ><a id="join-link" href="/join?code=${code}" target="_blank" rel="noopener"
+              ><a
+                id="join-link"
+                href="/join?code=${code}&mode=controller"
+                target="_blank"
+                rel="noopener"
                 >Otwórz pad ↗</a
               >
             </div>
@@ -125,11 +125,16 @@ export async function hostPage(code: string) {
             <div class="ready-progress" aria-hidden="true"><span></span></div>
           </div>
           <div id="lobby-players" class="lobby-players"></div>
-          <div class="lobby-tools">
+          <div class="lobby-tools" ${watch ? 'hidden' : ''}>
             <button class="button subtle" id="add-keyboard">+ Klawiatura</button
             ><button class="button subtle" id="add-bot">+ Bot</button>
           </div>
-          <button class="button primary start-button" id="start-race" disabled>
+          <button
+            class="button primary start-button"
+            id="start-race"
+            ${watch ? 'hidden' : ''}
+            disabled
+          >
             Start wyścigu <span>→</span>
           </button>
           <p class="lobby-footnote" id="start-help">
@@ -143,7 +148,7 @@ export async function hostPage(code: string) {
   mountLanguageSwitch(app);
   $('#results').addEventListener('cancel', (event) => {
     event.preventDefault();
-    void returnToLobby();
+    if (!spectator) void returnToLobby();
   });
   $('#add-bot').onclick = () => void hostCommand('bot').catch((e) => toast(e.message));
   $('#add-keyboard').onclick = () => {
@@ -161,13 +166,12 @@ export async function hostPage(code: string) {
         .requestFullscreen()
         .catch(() => toast('Pełny ekran nie jest dostępny w tej przeglądarce.'));
   };
-  const info = await api<NetworkInfo>('/api/info');
-  const isLoopback = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname),
-    base =
-      info.publicUrl ?? (isLoopback ? (info.networkUrls[0] ?? location.origin) : location.origin),
-    url = base + '/join?code=' + code;
+  const links = await roomLinks(code);
+  const base = links.base,
+    url = links.controller;
+  $('#share-room').setAttribute('href', watch ? links.controller : links.room);
   $('#join-link').setAttribute('href', url);
-  $('#network-instruction').textContent = t('Ta sama sieć Wi-Fi · {address}', {
+  $('#network-instruction').textContent = t('Otwórz na telefonie · {address}', {
     address: base.replace(/^https?:\/\//, ''),
   });
   $<HTMLImageElement>('#join-qr').src = await QRCode.toDataURL(url, {
@@ -177,19 +181,26 @@ export async function hostPage(code: string) {
   });
   const socket = connectGame(session);
   hostSocket = socket;
-  updateSettings = roomSettings($('#host-settings'), socket, { host: true });
+  if (!watch) updateSettings = roomSettings($('#host-settings'), socket, { host: true });
   const hostConnected = new Promise<void>((resolve) => socket.once('connect', resolve));
   socket.on('connect', () => {
     $('#host-connection').textContent = 'Online';
     $('#host-connection').classList.add('online');
   });
-  socket.on('disconnect', () => {
+  socket.on('disconnect', (reason) => {
+    if (spectator && reason === 'io server disconnect') {
+      location.replace('/room/' + code);
+      return;
+    }
     if (current) sound.update({ ...current, phase: 'paused' }, keyboardId);
     $('#host-connection').textContent = t('Łączenie…');
     $('#host-connection').classList.remove('online');
     toast('Utracono połączenie. Próbuję połączyć ponownie.');
   });
-  socket.on('connect_error', (e) => toast(e.message));
+  socket.on('connect_error', (e) => {
+    if (spectator) location.replace('/room/' + code);
+    else toast(e.message);
+  });
   socket.on('state', (state: Snapshot) => {
     current = state;
     scene?.setState(state);
@@ -205,14 +216,14 @@ export async function hostPage(code: string) {
   }
   onLanguageChange(() => {
     audioControls.refresh();
-    $('#network-instruction').textContent = t('Ta sama sieć Wi-Fi · {address}', {
+    $('#network-instruction').textContent = t('Otwórz na telefonie · {address}', {
       address: base.replace(/^https?:\/\//, ''),
     });
     $('#host-connection').textContent = socket.connected ? 'Online' : t('Łączenie…');
     renderHost(current);
   });
   await hostConnected;
-  if (new URLSearchParams(location.search).get('quick') === '1') {
+  if (!watch && new URLSearchParams(location.search).get('quick') === '1') {
     history.replaceState(null, '', location.pathname);
     try {
       await hostCommand('bot');
@@ -222,7 +233,7 @@ export async function hostPage(code: string) {
     } catch (e) {
       toast((e as Error).message);
     }
-  } else if (safeSession('turbo:keyboard:' + code))
+  } else if (!watch && safeSession('turbo:keyboard:' + code))
     void joinKeyboard(code).catch(() => {
       localStorage.removeItem('turbo:keyboard:' + code);
     });
@@ -318,7 +329,8 @@ function renderHost(state: Snapshot | null) {
         remove.className = 'remove-player';
         remove.setAttribute('aria-label', t('Usuń gracza {name}', { name: c.name }));
         remove.onclick = () => void hostCommand('remove', c.id).catch((e) => toast(e.message));
-        row.append(badge, name, status, remove);
+        row.append(badge, name, status);
+        if (!spectator) row.append(remove);
         list.append(row);
       }
       if (!state.cars.length) {
@@ -330,11 +342,13 @@ function renderHost(state: Snapshot | null) {
     }
     $<HTMLButtonElement>('#start-race').disabled =
       !state.canStart || !scene || !$('#loading').hidden;
-    $('#start-help').textContent = state.canStart
-      ? t('Wszyscy gotowi — automatyczny start za 5 sekund.')
-      : state.cars.length < 2
-        ? t('Pierwszy gracz jest adminem. Wszyscy gotowi? Start za 5 sekund.')
-        : t('Potwierdź gotowość na swoim padzie lub klawiaturze.');
+    $('#start-help').textContent = spectator
+      ? t('Oglądasz pokój. Wyścig rozpoczyna host i gracze.')
+      : state.canStart
+        ? t('Wszyscy gotowi — automatyczny start za 5 sekund.')
+        : state.cars.length < 2
+          ? t('Pierwszy gracz jest adminem. Wszyscy gotowi? Start za 5 sekund.')
+          : t('Potwierdź gotowość na swoim padzie lub klawiaturze.');
     $<HTMLButtonElement>('#add-bot').disabled = state.cars.length >= 8;
     const keyboard = state.cars.find((car) => car.id === keyboardId);
     $<HTMLButtonElement>('#add-keyboard').disabled = !keyboard && state.cars.length >= 8;
@@ -472,6 +486,7 @@ function renderHost(state: Snapshot | null) {
       disposeResultsText = bindTranslations(results);
       $('#results-content').append(resultsPodium(state.results));
       // A finished match resets readiness. Let everyone ready up in the lobby.
+      $('#rematch').hidden = spectator;
       $('#rematch').onclick = () => void returnToLobby();
     }
     const countdown = t('Powrót do lobby za {seconds} s', { seconds: Math.ceil(state.seconds) });
