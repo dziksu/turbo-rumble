@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.0](https://github.com/dziksu/turbo-rumble/compare/v1.2.1...v1.3.0) (2026-10-23)
+
+### Features
+
+- **room:** add admin handoff and match controls with manual keyboard readiness ([6458a48](https://github.com/dziksu/turbo-rumble/commit/6458a48703577406ac1ed57982bf47d9bf751dab))
+
 ## [1.2.1](https://github.com/dziksu/turbo-rumble/compare/v1.2.0...v1.2.1) (2026-10-23)
 
 ### Bug Fixes
