@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0](https://github.com/dziksu/turbo-rumble/compare/v1.0.0...v1.1.0) (2026-10-23)
+
+### Features
+
+- **multiplayer:** add shared room invitations and live spectators ([91705b3](https://github.com/dziksu/turbo-rumble/commit/91705b39a9af71bc86ceec0662b4a64c7e0c82dd))
+
 ## 1.0.0 (2026-10-23)
 
 ### Features
