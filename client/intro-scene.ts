@@ -49,7 +49,8 @@ export class IntroScene {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = T.PCFSoftShadowMap;
     container.append(this.renderer.domElement);
-    this.scene.add(new T.HemisphereLight('#fff4dd', '#b17e63', 2.4));
+    this.scene.add(new T.AmbientLight('#ffe6cf', 0.25));
+    this.scene.add(new T.HemisphereLight('#fff4dd', '#b17e63', 2.1));
     const sun = new T.DirectionalLight('#fff2d8', 3.4);
     sun.position.set(-7, 14, 10);
     sun.castShadow = true;

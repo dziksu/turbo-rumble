@@ -23,6 +23,7 @@ import { getTrack } from '../shared/track.ts';
 import type { MapId } from '../shared/maps.ts';
 import { addBiome, PALETTES } from './biomes.ts';
 import { ImpactShake, RoadEffects } from './race-effects.ts';
+import { SceneLighting } from './scene-lighting.ts';
 
 const mat = (color: T.ColorRepresentation, roughness = 0.8) =>
   new T.MeshStandardMaterial({ color, roughness });
@@ -52,6 +53,8 @@ export class GameScene {
   biomeScenery: ReturnType<typeof addBiome> = null;
   inspectionPose: { position: T.Vector3; target: T.Vector3 } | null = null;
   renderer: T.WebGLRenderer;
+  lighting: SceneLighting;
+  shadowFocus = new T.Vector3();
   scene = new T.Scene();
   camera = new T.PerspectiveCamera(55, 16 / 9, 1, 900);
   cars = new Map<string, Visual>();
@@ -100,19 +103,8 @@ export class GameScene {
     container.append(this.renderer.domElement);
     this.scene.background = new T.Color(PALETTES[this.track.id].sky);
     this.scene.fog = new T.Fog(PALETTES[this.track.id].sky, 145, 370);
-    const hemi = new T.HemisphereLight('#fff5dc', '#a06344', 2.6);
-    this.scene.add(hemi);
-    const sun = new T.DirectionalLight(PALETTES[this.track.id].light, 4.1);
-    sun.position.set(-40, 70, -40);
-    sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
-    sun.shadow.camera.left = -90;
-    sun.shadow.camera.right = 90;
-    sun.shadow.camera.top = 90;
-    sun.shadow.camera.bottom = -90;
-    sun.shadow.bias = -0.001;
-    sun.shadow.normalBias = 0.04;
-    this.scene.add(sun);
+    this.lighting = new SceneLighting(this.scene, this.renderer.capabilities.maxTextureSize);
+    this.lighting.setMap(this.track);
     this.camera.position
       .copy(this.track.OVERVIEW_CENTER)
       .add(
@@ -133,6 +125,7 @@ export class GameScene {
     ]).then(() => {
       if (this.disposed) return;
       this.assetsReady = true;
+      this.lighting.invalidate();
       if (this.snapshot) this.setState(this.snapshot);
     });
     this.resizeObserver = new ResizeObserver(() => this.resize());
@@ -231,6 +224,7 @@ export class GameScene {
     }
     const top = box(this.track.ROAD_WIDTH * 2 + 3, 1.4, 1, '#152b38');
     top.position.y = 7;
+    top.castShadow = top.receiveShadow = true;
     gate.add(top);
     const sign = this.textSprite('TURBO RUMBLE', '#fff0d2', '#152b38', 16, 2);
     sign.position.set(0, 7.05, -0.6);
@@ -535,6 +529,9 @@ export class GameScene {
     const stripe = box(1.2, 0.08, 0.65, car.color);
     stripe.position.set(0, 0.83, 0);
     lean.add(stripe);
+    lean.traverse((object) => {
+      if (object instanceof T.Mesh) object.castShadow = object.receiveShadow = true;
+    });
     const ring = new T.Mesh(
       new T.RingGeometry(1.65, 1.9, 40),
       new T.MeshBasicMaterial({
@@ -586,12 +583,12 @@ export class GameScene {
     this.roadEffects = new RoadEffects(this.scene, this.surfaces);
     this.scene.background = new T.Color(PALETTES[id].sky);
     this.scene.fog = new T.Fog(PALETTES[id].sky, 145, 370);
-    this.scene.traverse((object) => {
-      if (object instanceof T.DirectionalLight) object.color.set(PALETTES[id].light);
-    });
+    this.lighting.setMap(this.track);
     this.cameraProgress = 0;
     this.shake.clear();
-    void this.loadDecor(this.trackRoot);
+    void this.loadDecor(this.trackRoot).then(() => {
+      if (!this.disposed) this.lighting.invalidate();
+    });
   }
   setState(snapshot: Snapshot) {
     this.setMap(snapshot.settings?.mapId ?? 'desert');
@@ -824,7 +821,13 @@ export class GameScene {
     const racing =
       this.snapshot &&
       ['racing', 'segment', 'countdown', 'paused', 'finished'].includes(this.snapshot.phase);
+    let shadowRadius = this.track.OVERVIEW_RADIUS + 70;
+    this.shadowFocus.copy(this.track.OVERVIEW_CENTER);
     if (this.inspectionPose) {
+      if (this.inspectionPose.position.distanceTo(this.inspectionPose.target) < 120) {
+        this.shadowFocus.copy(this.inspectionPose.target);
+        shadowRadius = 120 * Math.max(1, this.camera.aspect / 2);
+      }
       this.cameraBase.copy(this.inspectionPose.position);
       this.camera.position.copy(this.cameraBase);
       this.camera.lookAt(this.inspectionPose.target);
@@ -836,6 +839,8 @@ export class GameScene {
       this.cameraProgress +=
         (this.snapshot!.cameraProgress - this.cameraProgress) * (1 - Math.exp(-dt * 8));
       const pose = this.track.cameraPose(this.cameraProgress);
+      this.shadowFocus.copy(pose.target);
+      shadowRadius = 120 * Math.max(1, this.camera.aspect / 2);
       this.cameraBase.lerp(pose.position, 1 - Math.exp(-dt * 6));
       this.camera.position.copy(this.cameraBase);
       this.camera.lookAt(pose.target);
@@ -862,6 +867,11 @@ export class GameScene {
     this.camera.translateY(offset.y);
     this.camera.rotateZ(offset.roll);
     this.roadEffects.update(paused ? 0 : dt);
+    this.lighting.update(
+      this.shadowFocus,
+      shadowRadius,
+      this.cars.size > 0 || this.track.id !== 'desert',
+    );
     this.renderer.render(this.scene, this.camera);
     this.raf = requestAnimationFrame((t) => this.frame(t));
   }
@@ -875,9 +885,7 @@ export class GameScene {
     for (const car of this.cars.values()) car.appearance.dispose();
     disposeResources([this.scene, ...this.models], this.weaponModels.roots);
     this.weaponModels.destroy();
-    this.scene.traverse((object) => {
-      if (object instanceof T.DirectionalLight) object.shadow.dispose();
-    });
+    this.lighting.destroy();
     this.scene.clear();
     this.models = [];
     this.cars.clear();

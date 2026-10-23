@@ -19,7 +19,7 @@ export async function mountMapCheck(app: HTMLElement) {
         overflow: hidden;
       }
       .map-check header {
-        height: 112px;
+        min-height: 112px;
         padding: 12px 20px;
         display: flex;
         align-items: center;
@@ -54,8 +54,20 @@ export async function mountMapCheck(app: HTMLElement) {
       .map-check input {
         width: 190px;
       }
+      .map-check #app {
+        height: 100svh;
+        display: flex;
+        flex-direction: column;
+      }
+      .map-check header {
+        flex-shrink: 0;
+      }
       .map-check #map-world {
-        height: calc(100svh - 112px);
+        flex: 1;
+        min-height: 0;
+      }
+      .map-check input[type='checkbox'] {
+        width: auto;
       }
     </style>
     <header>
@@ -77,11 +89,31 @@ export async function mountMapCheck(app: HTMLElement) {
         >POZYCJA NA TORZE<input id="map-position" type="range" min="0" step="0.1" /><output
           id="map-distance"
         ></output></label
+      ><label
+        >AMBIENT<input id="map-ambient" type="range" min="0" max="200" value="100" /><output
+          id="map-ambient-value"
+          >100%</output
+        ></label
+      ><label>CIENIE<input id="map-shadows" type="checkbox" checked /></label
       ><button id="map-scorch">Dodaj ślad wybuchu</button
       ><button id="map-clear">Wyczyść ślady</button>
     </header>
     <main id="map-world"></main>`;
   const scene = new GameScene(document.querySelector('#map-world')!, () => {}, mapId);
+  const ambientIntensity = scene.lighting.ambient.intensity,
+    hemisphereIntensity = scene.lighting.hemisphere.intensity;
+  document.querySelector<HTMLInputElement>('#map-ambient')!.oninput = (event) => {
+    const percent = Number((event.currentTarget as HTMLInputElement).value);
+    scene.lighting.ambient.intensity = (ambientIntensity * percent) / 100;
+    scene.lighting.hemisphere.intensity = (hemisphereIntensity * percent) / 100;
+    document.querySelector('#map-ambient-value')!.textContent = `${percent}%`;
+  };
+  document.querySelector<HTMLInputElement>('#map-shadows')!.onchange = (event) => {
+    const enabled = (event.currentTarget as HTMLInputElement).checked;
+    scene.renderer.shadowMap.enabled = enabled;
+    scene.lighting.sun.castShadow = enabled;
+    scene.lighting.invalidate();
+  };
   const biome = document.querySelector<HTMLSelectElement>('#map-biome')!;
   for (const [id, map] of Object.entries(MAPS)) biome.add(new Option(map.name, id));
   biome.value = mapId;
