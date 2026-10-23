@@ -2,6 +2,8 @@
 
 Browser-based party racing for **2–8 players**. Share one screen on a computer or TV and use your phones as controllers. Three maps, drifting, rockets, mines, nitro and a podium at the end of every match. Keyboard controls and bots are also supported. Available in English and Polish.
 
+All original application code was written using **OpenAI Codex** (primarily **GPT-6.1 Sol**), with requirements, design direction and playtesting feedback provided by Benjamin Rast.
+
 **[Play now → turborumble.rastwork.pl](https://turborumble.rastwork.pl/)**
 
 ![Turbo Rumble gameplay: an eight-car race on Sundown Junction with items and live standings](docs/gameplay.png)
