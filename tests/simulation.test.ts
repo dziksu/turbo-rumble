@@ -302,7 +302,9 @@ test('eight bots can complete a full match with finite state', () => {
         wins: 0,
       });
     r.start();
-    for (let i = 0; i < 12000 && r.phase !== 'finished'; i++) r.step();
+    // The race timeout starts after the countdown, not at the first simulation tick.
+    const deadline = r.raceStart + r.maximumRaceTicks;
+    while (r.tick < deadline && r.phase !== 'finished') r.step();
     assert.equal(r.phase, 'finished');
     assert.equal(r.results.length, 8);
     assert.ok(r.results.every((p) => Number.isFinite(p.score) && p.score >= 0 && p.score <= 10));

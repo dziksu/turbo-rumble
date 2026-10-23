@@ -5,12 +5,12 @@ import type { Track } from '../shared/track.ts';
 
 export const PALETTES = {
   desert: {
-    sky: '#d9c5ad',
-    ground: '#d3a474',
-    road: '#3f464b',
-    shoulder: '#bd8e62',
-    wall: '#b17850',
-    curb: '#e88258',
+    sky: '#efd3a3',
+    ground: '#a5492c',
+    road: '#dba96a',
+    shoulder: '#ba683a',
+    wall: '#984326',
+    curb: '#b9492e',
     light: '#fff0c7',
   },
   forest: {

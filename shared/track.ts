@@ -1,5 +1,10 @@
 import { createBiomeLayout, biomeRoadWidth } from './biome-layout.ts';
-import { createDesertLayout, desertRoadWidth, desertTerrainGeometry } from './desert-layout.ts';
+import {
+  createDesertLayout,
+  desertRoadWidth,
+  desertTerrainGeometry,
+  desertElevation,
+} from './desert-layout.ts';
 import { CatmullRomCurve3, Vector3 } from 'three';
 import { MAPS, type MapId } from './maps.ts';
 
@@ -8,13 +13,16 @@ function createTrack(id: MapId) {
   const TRACK_NAME = definition.name;
   const ROAD_WIDTH = definition.roadWidth;
   const SAMPLES = 1280;
-  const curve = new CatmullRomCurve3(
-    definition.points.map(([x, z]) =>
-      new Vector3(x, 0, z).multiplyScalar(id === 'desert' ? 1.1 : 1),
-    ),
-    true,
-    'centripetal',
-  );
+  const controlPoints = definition.points.map(([x, z]) => new Vector3(x, 0, z));
+  // Cut sharp polygon corners before interpolation; inner road edges must never fold back.
+  const curvePoints =
+    id === 'desert'
+      ? controlPoints.flatMap((a, i) => {
+          const b = controlPoints[(i + 1) % controlPoints.length];
+          return [a.clone().lerp(b, 0.2), a.clone().lerp(b, 0.8)];
+        })
+      : controlPoints;
+  const curve = new CatmullRomCurve3(curvePoints, true, 'centripetal');
   curve.arcLengthDivisions = 3200;
   const TRACK_LENGTH = curve.getLength();
   const CENTER = Array.from({ length: SAMPLES }, (_, i) => curve.getPointAt(i / SAMPLES));
@@ -44,6 +52,7 @@ function createTrack(id: MapId) {
       j = (i + 1) % SAMPLES,
       a = f - i;
     const p = CENTER[i].clone().lerp(CENTER[j], a);
+    if (id === 'desert') p.y = desertElevation(p.z);
     const t = TANGENTS[i].clone().lerp(TANGENTS[j], a).normalize();
     const width =
       id === 'desert'
@@ -51,12 +60,16 @@ function createTrack(id: MapId) {
         : biomeRoadWidth(id, wrap(s) / TRACK_LENGTH);
     return { p, t, n: new Vector3(t.z, 0, -t.x), yaw: Math.atan2(t.x, t.z), width };
   }
+  const surfaceHeight = (p: { z: number }) => (id === 'desert' ? desertElevation(p.z) : 0);
   const desert = id === 'desert' ? createDesertLayout(TRACK_LENGTH, trackAt) : null;
   const biome = id === 'desert' ? null : createBiomeLayout(id, TRACK_LENGTH, trackAt, GAPS);
   const terrainData = desert ? desertTerrainGeometry(desert) : biome!.terrain;
   const terrainGeometry = () => terrainData;
   const hasGuardrail = (s: number) => {
-    if (desert) return desert.atBridge(s, 3);
+    if (desert) {
+      const u = wrap(s) / TRACK_LENGTH;
+      return !isGap(s, 5) && ((u > 0.16 && u < 0.39) || (u > 0.43 && u < 0.71));
+    }
     const u = wrap(s) / TRACK_LENGTH;
     return (
       !isGap(s, 4) &&
@@ -66,13 +79,9 @@ function createTrack(id: MapId) {
     );
   };
   function botLane(s: number, slot: number) {
-    const normal = Math.sin(s / 32 + slot * 2) * 2.6;
-    if (!desert) return normal;
-    const distance = Math.abs(wrap(s - TRACK_LENGTH * 0.087 + TRACK_LENGTH / 2) - TRACK_LENGTH / 2);
-    const fraction = Math.max(0, Math.min(1, (64 - distance) / 28));
-    const influence = fraction * fraction * (3 - 2 * fraction);
-    return normal + ((slot % 2 ? 6.5 : -6.5) - normal) * influence;
+    return Math.sin(s / 32 + slot * 2) * 2.6;
   }
+
   function projectOnTrack(p: { x: number; z: number }, previous?: number) {
     let best = Infinity,
       index = 0;
@@ -91,7 +100,24 @@ function createTrack(id: MapId) {
         index = i;
       }
     }
-    const s = (index / SAMPLES) * TRACK_LENGTH;
+    // Refine the nearest vertex onto its adjacent segments. Progress and finish order
+    // need sub-metre precision even on the longer canyon circuit.
+    let s = (index / SAMPLES) * TRACK_LENGTH;
+    for (const start of [(index + SAMPLES - 1) % SAMPLES, index]) {
+      const a = CENTER[start],
+        b = CENTER[(start + 1) % SAMPLES];
+      const dx = b.x - a.x,
+        dz = b.z - a.z;
+      const f = Math.max(
+        0,
+        Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz)),
+      );
+      const distance = (p.x - a.x - f * dx) ** 2 + (p.z - a.z - f * dz) ** 2;
+      if (distance <= best) {
+        best = distance;
+        s = wrap(((start + f) / SAMPLES) * TRACK_LENGTH);
+      }
+    }
     let delta = previous === undefined ? 0 : s - wrap(previous);
     if (delta > TRACK_LENGTH / 2) delta -= TRACK_LENGTH;
     if (delta < -TRACK_LENGTH / 2) delta += TRACK_LENGTH;
@@ -105,8 +131,10 @@ function createTrack(id: MapId) {
     for (let i = 0; i <= SAMPLES; i++) {
       const a = trackAt((i / SAMPLES) * TRACK_LENGTH);
       const localWidth = a.width + width - ROAD_WIDTH;
-      for (const side of [-1, 1])
-        vertices.push(a.p.x + a.n.x * localWidth * side, y, a.p.z + a.n.z * localWidth * side);
+      for (const side of [-1, 1]) {
+        const p = a.p.clone().addScaledVector(a.n, localWidth * side);
+        vertices.push(p.x, surfaceHeight(p) + y, p.z);
+      }
       if (i < SAMPLES && !isGap(((i + 0.5) / SAMPLES) * TRACK_LENGTH)) {
         const v = i * 2;
         indices.push(v, v + 2, v + 1, v + 1, v + 2, v + 3);
@@ -130,7 +158,7 @@ function createTrack(id: MapId) {
       forward = target.sub(position).normalize();
     const right = new Vector3().crossVectors(forward, new Vector3(0, 1, 0)).normalize();
     const up = new Vector3().crossVectors(right, forward),
-      rel = new Vector3(p.x, 0, p.z).sub(position);
+      rel = new Vector3(p.x, p.y, p.z).sub(position);
     const depth = rel.dot(forward),
       half = Math.tan((55 * Math.PI) / 360);
     return (
@@ -141,10 +169,9 @@ function createTrack(id: MapId) {
   }
   const PICKUP_SPAWNS = Array.from({ length: 72 }, (_, id) => {
     const a = trackAt(((Math.floor(id / 3) + 1) / 25) * TRACK_LENGTH);
-    return {
-      id,
-      position: a.p.addScaledVector(a.n, ((id % 3) - 1) * 3.7).add(new Vector3(0, 1.15, 0)),
-    };
+    const p = a.p.addScaledVector(a.n, ((id % 3) - 1) * 3.7);
+    p.y = surfaceHeight(p) + 1.15;
+    return { id, position: p };
   }).filter((pickup) => !isGap(projectOnTrack(pickup.position).s, 20));
   type ObstacleKind = 'crate' | 'barrel' | 'barrier' | 'rock' | 'log';
   const obstaclePlan: [number, number, ObstacleKind][] = [
@@ -179,7 +206,7 @@ function createTrack(id: MapId) {
   ];
   const themedPlan =
     id === 'desert'
-      ? obstaclePlan
+      ? obstaclePlan.filter(([u]) => ![0.125, 0.455, 0.69].some((r) => Math.abs(u - r) < 0.012))
       : obstaclePlan.map(([u, side, kind], index): [number, number, ObstacleKind] => [
           u,
           side * 1.35,
@@ -200,7 +227,7 @@ function createTrack(id: MapId) {
                   ? { x: 2.7, y: 2.2, z: 2.5 }
                   : { x: 2, y: 1.8, z: 2 };
       const position = a.p.addScaledVector(a.n, side);
-      position.y = size.y / 2;
+      position.y = surfaceHeight(position) + size.y / 2;
       return {
         id,
         s: u * TRACK_LENGTH,
@@ -213,21 +240,23 @@ function createTrack(id: MapId) {
         mass: kind === 'log' ? 110 : kind === 'barrel' ? 28 : 45,
       };
     });
-  const RAMPS =
-    id === 'desert'
+  const RAMPS = [
+    ...GAPS.map((gap) => ({
+      s: gap.s - gap.length / 2 - 9,
+      side: 0,
+      length: 18,
+      width: trackAt(gap.s).width * 2 + 0.5,
+      height: 3.6,
+    })),
+    ...(id === 'desert'
       ? [
           { s: TRACK_LENGTH * 0.125, side: 3.4, length: 9, width: 3.2, height: 1.35 },
-          { s: TRACK_LENGTH * 0.365, side: -3.3, length: 11, width: 3.2, height: 1.9 },
+          { s: TRACK_LENGTH * 0.455, side: -3.3, length: 11, width: 3.2, height: 1.9 },
           { s: TRACK_LENGTH * 0.69, side: 3.4, length: 12, width: 3.2, height: 2.1 },
         ]
-      : GAPS.map((gap) => ({
-          s: gap.s - gap.length / 2 - 9,
-          side: 0,
-          length: 18,
-          width: ROAD_WIDTH * 2 + 0.5,
-          height: 3.6,
-        }));
-  const RAMP = RAMPS[0];
+      : []),
+  ];
+  const RAMP = RAMPS[id === 'desert' ? 1 : 0];
   function rampGeometry(ramp: typeof RAMP) {
     const a = trackAt(ramp.s),
       vertices: number[] = [];
@@ -238,7 +267,8 @@ function createTrack(id: MapId) {
             .clone()
             .addScaledVector(a.t, along)
             .addScaledVector(a.n, ramp.side + side);
-          vertices.push(p.x, top ? (along < 0 ? -0.03 : ramp.height) : -0.15, p.z);
+          const base = id === 'desert' ? desertElevation(p.z) : 0;
+          vertices.push(p.x, base + (top ? (along < 0 ? -0.03 : ramp.height) : -0.15), p.z);
         }
     return {
       vertices: new Float32Array(vertices),
@@ -254,6 +284,7 @@ function createTrack(id: MapId) {
     desert,
     biome,
     terrainGeometry,
+    surfaceHeight,
     hasGuardrail,
     botLane,
     TRACK_NAME,

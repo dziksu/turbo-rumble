@@ -1,3 +1,4 @@
+import { CORRAL_FENCE_HEIGHT } from './desert-layout.ts';
 import { movingHazardPose } from './biome-layout.ts';
 import * as weapons from './weapons.ts';
 import type { Car, Driver, Shot } from './entities.ts';
@@ -117,10 +118,42 @@ export class Race {
             .setFriction(0.25)
             .setRestitution(0.25),
         );
+      for (const building of this.track.desert.buildings)
+        this.world.createCollider(
+          RAPIER.ColliderDesc.cuboid(building.size.x / 2, building.size.y / 2, building.size.z / 2)
+            .setTranslation(
+              building.position.x,
+              building.position.y + building.size.y / 2,
+              building.position.z,
+            )
+            .setRotation(new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), building.yaw))
+            .setFriction(0.3),
+        );
+      for (const mesa of this.track.desert.landforms)
+        this.world.createCollider(
+          RAPIER.ColliderDesc.cylinder(mesa.height / 2, mesa.radius * 0.85)
+            .setTranslation(mesa.position.x, mesa.position.y + mesa.height / 2, mesa.position.z)
+            .setFriction(0.4),
+        );
+      for (const { a, b } of this.track.desert.corral.fence) {
+        const center = a.clone().add(b).multiplyScalar(0.5);
+        this.world.createCollider(
+          RAPIER.ColliderDesc.cuboid(0.16, CORRAL_FENCE_HEIGHT / 2, a.distanceTo(b) / 2 + 0.12)
+            .setTranslation(center.x, center.y + CORRAL_FENCE_HEIGHT / 2, center.z)
+            .setRotation(
+              new Quaternion().setFromAxisAngle(
+                new Vector3(0, 1, 0),
+                Math.atan2(b.x - a.x, b.z - a.z),
+              ),
+            )
+            .setFriction(0.15)
+            .setRestitution(0.15),
+        );
+      }
       const fountain = this.track.desert.fountain;
       this.world.createCollider(
         RAPIER.ColliderDesc.cylinder(0.7, 3)
-          .setTranslation(fountain.x, 0.7, fountain.z)
+          .setTranslation(fountain.x, fountain.y + 0.7, fountain.z)
           .setRestitution(0.2),
       );
     }
@@ -221,7 +254,7 @@ export class Race {
         );
         this.world.createCollider(
           RAPIER.ColliderDesc.cuboid(0.22, 0.65, delta.length() / 2 + 0.06)
-            .setTranslation(p.x, 0.5, p.z)
+            .setTranslation(p.x, this.track.surfaceHeight(p) + 0.5, p.z)
             .setRotation(q)
             .setRestitution(0.3)
             .setFriction(0.08),
@@ -389,7 +422,10 @@ export class Race {
       p = a.p.clone().addScaledVector(a.n, ((c.slot % 4) - 1.5) * 2.7);
     c.body.setEnabled(true);
     c.body.setEnabledRotations(true, true, true, true);
-    c.body.setTranslation({ x: p.x, y: VEHICLE_RIDE_HEIGHT, z: p.z }, true);
+    c.body.setTranslation(
+      { x: p.x, y: this.track.surfaceHeight(p) + VEHICLE_RIDE_HEIGHT, z: p.z },
+      true,
+    );
     c.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
     c.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
     c.wreckUntil = 0;
@@ -486,7 +522,7 @@ export class Race {
           )
         )
           clear = false;
-        const spawn = { x: p.x, y: 0.75, z: p.z },
+        const spawn = { x: p.x, y: this.track.surfaceHeight(p) + 0.75, z: p.z },
           rotation = new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), a.yaw),
           shape = c.body.collider(0).shape;
         if (
@@ -716,7 +752,14 @@ export class Race {
             c.body.setEnabledRotations(true, true, true, true);
             this.emit('explosion', p, 'LAWA', '#ff722d', undefined, 0.65);
           }
-          this.eliminate(c.id, this.settings.mapId === 'volcano' ? 'lawa' : 'rzeka');
+          this.eliminate(
+            c.id,
+            this.settings.mapId === 'volcano'
+              ? 'lawa'
+              : this.settings.mapId === 'desert'
+                ? 'wąwóz'
+                : 'rzeka',
+          );
         }
         if (p.y < -3) this.eliminate(c.id, 'wypadnięcie z toru');
         if (c.invulnerableUntil <= this.tick && this.track.outsideCamera(p, this.cameraProgress))

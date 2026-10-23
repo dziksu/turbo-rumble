@@ -1,9 +1,17 @@
 # Sundown Junction assets
 
-Downloaded directly from Kenney on 2026-10-21. All three packs include the original CC0 license text in their respective folders (line endings and whitespace normalized). Only selected GLB models and their referenced local textures are shipped. No runtime CDN requests are needed.
+## Canyon rebuild — 2026-10-23
 
-- [City Kit (Suburban) 2.0](https://kenney.nl/assets/city-kit-suburban): houses (`building-type-*`). [Original ZIP](https://kenney.nl/media/pages/assets/city-kit-suburban/2c871b7af2-1745479373/kenney_city-kit-suburban_20.zip).
-- [City Kit (Commercial) 2.1](https://kenney.nl/assets/city-kit-commercial): shops and parasols. [Original ZIP](https://kenney.nl/media/pages/assets/city-kit-commercial/a742d900eb-1753115042/kenney_city-kit-commercial_2.1.zip).
-- [Nature Kit](https://kenney.nl/assets/nature-kit): rocks and bushes. The grassy parts of the new rocks are tinted sandstone in the game material. [Original ZIP](https://kenney.nl/media/pages/assets/nature-kit/37ac38a37b-1677698939/kenney_nature-kit.zip).
+Downloaded directly from [Kenney Nature Kit](https://kenney.nl/assets/nature-kit), licensed CC0. [Original ZIP](https://kenney.nl/media/pages/assets/nature-kit/37ac38a37b-1677698939/kenney_nature-kit.zip).
 
-Models are fitted to the declared world bounds and instanced in `client/desert-scenery.ts`. The ground, canyon cuts, bridge structures, parking bays, fountain and awnings are code-generated game geometry. Existing Nature Kit palm/cactus files remain in `/assets/nature/`.
+Selected local GLB files: `cactus_tall`, `cactus_short`, `rock_tallC`, `rock_tallD`, `rock_smallC`, `plant_bushSmall`, `grass_large`. These models contain no external image dependencies. The original license is in `nature/LICENSE.txt`. Materials are made nonmetallic, cacti olive green, rocks sandstone orange, and grass/bushes dry ochre. Source geometry is preserved and instances are fitted to world bounds.
+
+The terrain, layered mesas, western buildings, water tower, windmill, fountain, grandstands and ramp decking are project-authored low-poly geometry. Buildings/details are baked by colour and spatial cell; natural props use spatially grouped instances. Assets are served locally with no runtime CDN calls.
+
+## Earlier assets retained in the repository
+
+Downloaded on 2026-10-21; original CC0 licenses remain in the corresponding folders. The rebuilt desert no longer loads the suburban/commercial houses or palms.
+
+- [City Kit (Suburban) 2.0](https://kenney.nl/assets/city-kit-suburban): `suburban/building-type-*`.
+- [City Kit (Commercial) 2.1](https://kenney.nl/assets/city-kit-commercial): `commercial/building-*` and parasols.
+- [Nature Kit](https://kenney.nl/assets/nature-kit): earlier rocks and bushes in `nature/`; legacy palm/cactus models in `/assets/nature/` are also used by other scenes.

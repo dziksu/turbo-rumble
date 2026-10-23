@@ -28,7 +28,7 @@ function setup(s = 80, offset = 0) {
     c.progress = s + i * 20;
     c.weapon = null;
     c.invulnerableUntil = 10000;
-    c.body.setTranslation({ x: a.p.x, y: 0.55, z: a.p.z }, true);
+    c.body.setTranslation({ x: a.p.x, y: a.p.y + 0.55, z: a.p.z }, true);
     c.body.setRotation(
       new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), a.yaw + (i === 0 ? offset : 0)),
       true,
@@ -53,7 +53,7 @@ function yaw(r: Race) {
 }
 const angle = (v: number) => Math.atan2(Math.sin(v), Math.cos(v));
 
-for (const s of [80, 300, 520, 740])
+for (const s of [80, 250, 520, 740])
   for (const direction of ['left', 'right'] as const)
     test(`${direction} turns to the correct screen side at track metre ${s}`, () => {
       const r = setup(s);
@@ -105,7 +105,8 @@ test('neutral human input retains an off-track heading and accelerates along the
   }
 });
 test('releasing steering stops the turn without straightening the car towards the track', () => {
-  const r = setup();
+  // Keep this steering-only fixture on the open straight, clear of the cattle fence.
+  const r = setup(-100);
   try {
     run(r, 25, true);
     const released = yaw(r);

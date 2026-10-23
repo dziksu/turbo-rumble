@@ -373,7 +373,7 @@ export const EN = {
   'Graczy usuwasz w lobby.': 'Remove players in the lobby.',
   'Nieprawidłowa sesja lub pokój wygasł. Dołącz ponownie.':
     'Invalid session or expired room. Please join again.',
-  'Miasteczko · place i mosty': 'Town · plazas & bridges',
+  'Kanion · serpentyny i skok nad wąwozem': 'Canyon · switchbacks & ravine jump',
   '— domy i zabudowa, licencja': '— houses and town buildings, license',
   '— sklepy i detale uliczne, licencja': '— shops and street details, license',
   'Ustawienia dźwięku': 'Audio settings',

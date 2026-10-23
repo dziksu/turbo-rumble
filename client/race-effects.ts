@@ -39,7 +39,7 @@ export class ImpactShake {
 export function scorchGeometry(surface: T.Mesh, position: Vec, seed = 0) {
   const projected = new DecalGeometry(
     surface,
-    new T.Vector3(position.x, 1.2, position.z),
+    new T.Vector3(position.x, position.y + 1.2, position.z),
     new T.Euler(-Math.PI / 2, 0, seed * 2.39996),
     new T.Vector3(6.2, 5.5, 6),
   );

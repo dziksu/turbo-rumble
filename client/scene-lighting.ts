@@ -8,9 +8,9 @@ const PROFILES = {
     ambient: '#ffe6c4',
     sky: '#fff2da',
     ground: '#936747',
-    fill: 1.65,
+    fill: 1.3,
     sun: '#fff0c7',
-    power: 3.6,
+    power: 2.5,
   },
   forest: {
     ambient: '#dbece5',

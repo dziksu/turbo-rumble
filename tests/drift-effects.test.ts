@@ -21,10 +21,12 @@ function setup(speed = 16) {
     });
   r.start();
   r.phase = 'racing';
-  r.cameraProgress = 80;
+  // Drift recovery needs open runoff; the opening bend now has a solid cattle fence.
+  const start = -100;
+  r.cameraProgress = start;
   for (const [i, c] of [...r.cars.values()].entries()) {
-    const a = trackAt(80 + i * 20);
-    c.progress = 80 + i * 20;
+    const a = trackAt(start + i * 20);
+    c.progress = start + i * 20;
     c.weapon = null;
     c.invulnerableUntil = 10000;
     const p = a.p.clone().addScaledVector(a.n, i === 0 ? -3 : 0);

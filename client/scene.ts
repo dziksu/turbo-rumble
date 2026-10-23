@@ -184,7 +184,7 @@ export class GameScene {
     sand.receiveShadow = true;
     this.trackRoot.add(sand);
     const terrain = addDesertTerrain(this.trackRoot, this.track, (text) =>
-      this.textSprite(text, '#fff0d2', '#284553', 8.5, 1.1),
+      this.textSprite(text, '#ffe3a3', '#593a25', 12, 1.5),
     );
     if (terrain) this.surfaces.push(terrain);
     this.roadMesh(this.track.ROAD_WIDTH + 1, SURFACE_HEIGHTS.shoulder, palette.shoulder);
@@ -203,11 +203,14 @@ export class GameScene {
     for (let s = 0; s < this.track.TRACK_LENGTH; s += 3.2)
       if (hasCenterDash(s, this.track)) {
         const at = this.track.trackAt(s);
-        at.p.y = 0.06;
+        at.p.y += 0.06;
         dashes.push({ position: at.p, yaw: at.yaw });
       }
     this.instancedBoxes(0.14, 0.025, 2.1, '#dfcfad', dashes);
-    const rails = new T.Mesh(guardrailGeometry(this.track), mat('#e4ddd0'));
+    const rails = new T.Mesh(
+      guardrailGeometry(this.track),
+      mat(this.track.desert ? '#67533d' : '#e4ddd0'),
+    );
     rails.name = 'track-guardrails';
     rails.castShadow = true;
     rails.receiveShadow = true;
@@ -351,32 +354,8 @@ export class GameScene {
       sea.position.y = -1.8;
       this.trackRoot.add(sea);
     }
-    if (this.track.id !== 'desert') return;
-    // Deterministic desert scenery; visual decoration never changes collisions.
-    for (let i = 0; i < 95; i++) {
-      const angle = i * 2.39996,
-        radius = this.track.OVERVIEW_RADIUS * 1.05 + (i % 6) * 17,
-        p = this.track.OVERVIEW_CENTER.clone().add(
-          new T.Vector3(Math.sin(angle) * radius, 0, Math.cos(angle) * radius),
-        );
-      if (this.track.projectOnTrack(p).distance < 14) continue;
-      const rock = new T.Mesh(
-        new T.DodecahedronGeometry(4 + (i % 6), 0),
-        mat(i % 2 ? '#b5815a' : '#c08e68'),
-      );
-      rock.position.set(p.x, -4 + Math.sin(i) * 2, p.z);
-      rock.scale.set(1, 0.8 + (i % 3), 1);
-      rock.rotation.set(i, angle, 0.1);
-      rock.castShadow = true;
-      this.trackRoot.add(rock);
-    }
-    const billboard = this.track.trackAt(this.track.TRACK_LENGTH * 0.25);
-    const board = box(13, 4, 0.4, '#f4c347');
-    board.position.copy(billboard.p).addScaledVector(billboard.n, 17);
-    board.position.y = 4;
-    board.rotation.y = billboard.yaw + Math.PI / 2;
-    this.trackRoot.add(board);
   }
+
   async loadAssets() {
     const loader = new GLTFLoader();
     const carNames = ['race', 'race-future', 'hatchback-sports', 'suv'];

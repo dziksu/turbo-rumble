@@ -1,3 +1,4 @@
+import { syncPickupVisuals } from './pickup-visuals.ts';
 // Development-only surface inspection using the production scene and fixed camera positions.
 import { Vector3 } from 'three';
 import { GameScene } from './scene.ts';
@@ -6,12 +7,14 @@ import { MAPS, type MapId } from '../shared/maps.ts';
 
 export async function mountMapCheck(app: HTMLElement) {
   const query = new URLSearchParams(location.search);
+  const capture = query.get('capture') === '1';
   const mapId = Object.hasOwn(MAPS, query.get('map') ?? '')
     ? (query.get('map') as MapId)
     : 'desert';
   const { OBSTACLES, OVERVIEW_CENTER, OVERVIEW_RADIUS, RAMPS, TRACK_LENGTH, cameraPose, trackAt } =
     getTrack(mapId);
   document.body.className = 'map-check';
+  document.title = `${MAPS[mapId].name} · Map inspection`;
   app.innerHTML = /* HTML */ `<style>
       .map-check {
         background: #142633;
@@ -74,6 +77,7 @@ export async function mountMapCheck(app: HTMLElement) {
       <div>
         <h1>Turbo Rumble · kontrola powierzchni</h1>
         <p id="map-status">Ładowanie sceny…</p>
+        <p id="map-performance"></p>
       </div>
       <label>MAPA<select id="map-biome"></select></label
       ><label>MIEJSCE<select id="map-location"></select></label
@@ -99,6 +103,12 @@ export async function mountMapCheck(app: HTMLElement) {
       ><button id="map-clear">Wyczyść ślady</button>
     </header>
     <main id="map-world"></main>`;
+  if (capture) {
+    const style = document.createElement('style');
+    style.textContent =
+      '.map-check header{display:none!important}.map-check #map-world{flex:none!important;width:100vw;height:56.25vw!important}.map-check #app{height:56.25vw!important}';
+    document.head.append(style);
+  }
   const scene = new GameScene(document.querySelector('#map-world')!, () => {}, mapId);
   const ambientIntensity = scene.lighting.ambient.intensity,
     hemisphereIntensity = scene.lighting.hemisphere.intensity;
@@ -121,6 +131,8 @@ export async function mountMapCheck(app: HTMLElement) {
     location.href = `/map-check?map=${biome.value}&s=0&view=overview`;
   };
   scene.scene.fog = null;
+  scene.camera.far = 2200;
+  scene.camera.updateProjectionMatrix();
   const locations = document.querySelector<HTMLSelectElement>('#map-location')!,
     view = document.querySelector<HTMLSelectElement>('#map-view')!,
     position = document.querySelector<HTMLInputElement>('#map-position')!;
@@ -129,10 +141,8 @@ export async function mountMapCheck(app: HTMLElement) {
     ['Prosta', 80],
     ...(getTrack(mapId).desert
       ? ([
-          ['Rynek i fontanna', TRACK_LENGTH * 0.087],
-          ['Plac serwisowy', TRACK_LENGTH * 0.52],
-          ...getTrack(mapId).desert!.bridges.map(
-            (bridge) => [bridge.name, bridge.s] as [string, number],
+          ...getTrack(mapId).desert!.landmarks.map(
+            (point) => [point.name, point.s] as [string, number],
           ),
         ] as [string, number][])
       : []),
@@ -141,7 +151,10 @@ export async function mountMapCheck(app: HTMLElement) {
     ) ?? []),
     ...getTrack(mapId).GAPS.map(
       (gap, i) =>
-        [`${gap.kind === 'river' ? 'Rzeka' : 'Lawa'} ${i + 1}`, gap.s] as [string, number],
+        [
+          `${gap.kind === 'river' ? 'Rzeka' : gap.kind === 'canyon' ? 'Wąwóz' : 'Lawa'} ${i + 1}`,
+          gap.s,
+        ] as [string, number],
     ),
     ...RAMPS.map((ramp, i) => [`Rampa ${i + 1}`, ramp.s] as [string, number]),
     ...OBSTACLES.filter((o) => o.kind === 'barrier').map(
@@ -180,7 +193,11 @@ export async function mountMapCheck(app: HTMLElement) {
     if (mode === 'overview')
       scene.inspectionPose = {
         position: OVERVIEW_CENTER.clone().add(
-          new Vector3(OVERVIEW_RADIUS * 0.8, OVERVIEW_RADIUS * 1.8, OVERVIEW_RADIUS),
+          new Vector3(
+            mapId === 'desert' ? 0 : OVERVIEW_RADIUS * 0.8,
+            OVERVIEW_RADIUS * 1.85 * Math.max(1, 1.6 / scene.camera.aspect),
+            OVERVIEW_RADIUS * 1.06 * Math.max(1, 1.6 / scene.camera.aspect),
+          ),
         ),
         target: OVERVIEW_CENTER.clone(),
       };
@@ -199,7 +216,11 @@ export async function mountMapCheck(app: HTMLElement) {
     }
     document.querySelector('#map-distance')!.textContent =
       `${s.toFixed(1)} / ${TRACK_LENGTH.toFixed(1)} m`;
-    history.replaceState(null, '', `/map-check?map=${mapId}&s=${s.toFixed(1)}&view=${mode}`);
+    history.replaceState(
+      null,
+      '',
+      `/map-check?map=${mapId}&s=${s.toFixed(1)}&view=${mode}${capture ? '&capture=1' : ''}`,
+    );
   }
   locations.onchange = () => {
     position.value = locations.value;
@@ -217,7 +238,36 @@ export async function mountMapCheck(app: HTMLElement) {
   document.querySelector<HTMLButtonElement>('#map-clear')!.onclick = () =>
     scene.roadEffects.clear();
   updateView();
+  syncPickupVisuals(
+    scene.scene,
+    scene.pickups,
+    getTrack(mapId).PICKUP_SPAWNS.map((p) => ({ ...p, active: true })),
+  );
   await scene.ready;
+  let previous = performance.now();
+  const frameTimes: number[] = [];
+  let meterFrame = 0;
+  const meter = (now: number) => {
+    frameTimes.push(now - previous);
+    if (frameTimes.length > 120) frameTimes.shift();
+    previous = now;
+    meterFrame = requestAnimationFrame(meter);
+  };
+  meterFrame = requestAnimationFrame(meter);
+  const meterTimer = window.setInterval(() => {
+    const info = scene.renderer.info;
+    const sorted = [...frameTimes].sort((a, b) => a - b);
+    document.querySelector('#map-performance')!.textContent =
+      `${info.render.calls} draw calls · ${info.render.triangles.toLocaleString('en-US')} triangles · frame p95 ${(sorted[Math.floor(sorted.length * 0.95)] ?? 0).toFixed(1)} ms · ${info.memory.geometries} geometries`;
+  }, 1000);
+  window.addEventListener(
+    'pagehide',
+    () => {
+      clearInterval(meterTimer);
+      cancelAnimationFrame(meterFrame);
+    },
+    { once: true },
+  );
   document.querySelector('#map-status')!.textContent =
     'Gotowe · stała kamera, prawdziwa geometria i materiały gry';
   window.addEventListener('pagehide', () => scene.destroy(), { once: true });

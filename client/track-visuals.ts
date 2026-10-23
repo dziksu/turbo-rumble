@@ -1,3 +1,4 @@
+import { desertElevation } from '../shared/desert-layout.ts';
 import { BufferGeometry, Float32BufferAttribute, Vector3 } from 'three';
 import { getTrack, type Track } from '../shared/track.ts';
 const defaultTrack = getTrack();
@@ -25,7 +26,8 @@ function geometry(vertices: number[]) {
 function point(track: Track, s: number, side: number, y: number) {
   const at = track.trackAt(s);
   const localSide = side + Math.sign(side) * (at.width - track.ROAD_WIDTH);
-  return at.p.addScaledVector(at.n, localSide).setY(y);
+  const p = at.p.addScaledVector(at.n, localSide);
+  return p.setY(track.surfaceHeight(p) + y);
 }
 
 // A continuous strip follows each curved edge. Neighboring tiles share an edge, never a face.
@@ -44,10 +46,18 @@ export function curbGeometries(track: Track = defaultTrack): [BufferGeometry, Bu
           b = point(track, end, near, SURFACE_HEIGHTS.curbTop),
           c = point(track, end, far, SURFACE_HEIGHTS.curbTop),
           d = point(track, start, far, SURFACE_HEIGHTS.curbTop);
-        const bottomA = a.clone().setY(SURFACE_HEIGHTS.curbBase),
-          bottomB = b.clone().setY(SURFACE_HEIGHTS.curbBase),
-          bottomC = c.clone().setY(SURFACE_HEIGHTS.curbBase),
-          bottomD = d.clone().setY(SURFACE_HEIGHTS.curbBase);
+        const bottomA = a
+            .clone()
+            .add(new Vector3(0, SURFACE_HEIGHTS.curbBase - SURFACE_HEIGHTS.curbTop, 0)),
+          bottomB = b
+            .clone()
+            .add(new Vector3(0, SURFACE_HEIGHTS.curbBase - SURFACE_HEIGHTS.curbTop, 0)),
+          bottomC = c
+            .clone()
+            .add(new Vector3(0, SURFACE_HEIGHTS.curbBase - SURFACE_HEIGHTS.curbTop, 0)),
+          bottomD = d
+            .clone()
+            .add(new Vector3(0, SURFACE_HEIGHTS.curbBase - SURFACE_HEIGHTS.curbTop, 0));
         const vertices = colors[tile % 2];
         quad(vertices, a, b, c, d);
         quad(vertices, a, bottomA, bottomB, b);
@@ -66,7 +76,7 @@ export function roadbedWallGeometry(track: Track = defaultTrack) {
         s1 = ((sample + 1) / track.SAMPLES) * track.TRACK_LENGTH;
       if (
         track.isGap((s0 + s1) / 2) ||
-        (track.desert && !track.desert.atBridge((s0 + s1) / 2, 7)) ||
+        (track.desert && !track.isGap((s0 + s1) / 2, 22)) ||
         (track.biome && !track.isGap((s0 + s1) / 2, 14))
       )
         continue;
@@ -105,10 +115,10 @@ export function guardrailGeometry(track: Track = defaultTrack) {
           b = point(track, s1, inner, 0.975),
           c = point(track, s1, outer, 0.975),
           d = point(track, s0, outer, 0.975);
-        const bottomA = a.clone().setY(0.325),
-          bottomB = b.clone().setY(0.325),
-          bottomC = c.clone().setY(0.325),
-          bottomD = d.clone().setY(0.325);
+        const bottomA = a.clone().add(new Vector3(0, -0.65, 0)),
+          bottomB = b.clone().add(new Vector3(0, -0.65, 0)),
+          bottomC = c.clone().add(new Vector3(0, -0.65, 0)),
+          bottomD = d.clone().add(new Vector3(0, -0.65, 0));
         quad(vertices, a, b, c, d);
         quad(vertices, a, bottomA, bottomB, b);
         quad(vertices, d, c, bottomC, bottomD);
@@ -125,7 +135,8 @@ export function visibleRampGeometry(ramp: Track['RAMPS'][number], track: Track =
   for (let vertex = 0; vertex < 4; vertex++)
     data.vertices[vertex * 3 + 1] = Math.max(
       data.vertices[vertex * 3 + 1],
-      SURFACE_HEIGHTS.rampEntry,
+      SURFACE_HEIGHTS.rampEntry +
+        (track.desert ? desertElevation(data.vertices[vertex * 3 + 2]) : 0),
     );
   const result = new BufferGeometry();
   result.setAttribute('position', new Float32BufferAttribute(data.vertices, 3));
@@ -136,6 +147,7 @@ export function visibleRampGeometry(ramp: Track['RAMPS'][number], track: Track =
 
 export function hasCenterDash(s: number, track: Track = defaultTrack) {
   return (
+    track.id !== 'desert' &&
     !track.isGap(s, 10) &&
     (!track.desert || track.trackAt(s).p.distanceTo(track.desert.fountain) > 6) &&
     Math.round(s / 3.2) % 3 === 0 &&

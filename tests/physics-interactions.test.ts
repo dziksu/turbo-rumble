@@ -42,7 +42,7 @@ function move(r: Race, id: string, s: number, side = 0, y = 0.65) {
     a = trackAt(s),
     p = a.p.clone().addScaledVector(a.n, side);
   c.progress = s;
-  c.body.setTranslation({ x: p.x, y, z: p.z }, true);
+  c.body.setTranslation({ x: p.x, y: r.track.surfaceHeight(p) + y, z: p.z }, true);
   c.body.setRotation(new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), a.yaw), true);
   c.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
   return c;
@@ -249,7 +249,7 @@ for (const [index, ramp] of RAMPS.entries())
           .clone()
           .addScaledVector(a.t, -ramp.length / 2 - 4)
           .addScaledVector(a.n, ramp.side);
-        c.body.setTranslation({ ...approach, y: 0.69 }, true);
+        c.body.setTranslation({ ...approach, y: r.track.surfaceHeight(approach) + 0.69 }, true);
         c.body.setRotation(new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), a.yaw), true);
         move(r, 'p1', ramp.s + 20, -ramp.side);
         r.cameraProgress = ramp.s;
@@ -258,7 +258,8 @@ for (const [index, ramp] of RAMPS.entries())
           landed = false;
         for (let i = 0; i < 180; i++) {
           run(r, 1);
-          const y = c.body.translation().y;
+          const p = c.body.translation(),
+            y = p.y - r.track.surfaceHeight(p);
           highest = Math.max(highest, y);
           if (highest > ramp.height + 0.2 && y < 1.3) {
             landed = true;
