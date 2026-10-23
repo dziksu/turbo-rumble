@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.1](https://github.com/dziksu/turbo-rumble/compare/v1.2.0...v1.2.1) (2026-10-23)
+
+### Bug Fixes
+
+- **readme:** disclose Codex-written application code ([554bd68](https://github.com/dziksu/turbo-rumble/commit/554bd68ee4f674551e108c7c9c4808637b2adc8f))
+
 ## [1.2.0](https://github.com/dziksu/turbo-rumble/compare/v1.1.0...v1.2.0) (2026-10-23)
 
 ### Features
