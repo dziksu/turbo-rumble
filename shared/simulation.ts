@@ -35,7 +35,7 @@ import {
 } from './types.ts';
 import { getTrack, type Track } from './track.ts';
 import { DEFAULT_SETTINGS, type RaceSettings } from './maps.ts';
-import { drivingControl } from './driving.ts';
+import { DRIVING, drivingControl } from './driving.ts';
 import { VehiclePhysics } from './vehicle.ts';
 import { CATCH_UP, updateCatchUp } from './catch-up.ts';
 const WEAPON_LIST: Weapon[] = ['boost', 'rocket', 'mine', 'frost', 'pulse'];
@@ -281,7 +281,7 @@ export class Race {
       RAPIER.RigidBodyDesc.dynamic()
         .setTranslation(p.x, VEHICLE_RIDE_HEIGHT, p.z)
         .setRotation(new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), a.yaw))
-        .setLinearDamping(0.1)
+        .setLinearDamping(DRIVING.linearDamping)
         .setAngularDamping(1.6)
         .setCcdEnabled(true)
         .setCanSleep(false),
@@ -309,6 +309,7 @@ export class Race {
       weapon: null,
       boostUntil: 0,
       frostUntil: 0,
+      frostSpeed: null,
       invulnerableUntil: 0,
       outsideTicks: 0,
       lastInputTick: -999,
@@ -437,6 +438,7 @@ export class Race {
     c.outsideTicks = 0;
     c.boostUntil = 0;
     c.frostUntil = 0;
+    c.frostSpeed = null;
     c.invulnerableUntil = this.tick + 65;
     c.hitUntil = 0;
     c.usedAction = c.input.actionSeq;
@@ -694,13 +696,23 @@ export class Race {
       const frozen = c.frostUntil > this.tick,
         boost = c.boostUntil > this.tick,
         hit = c.hitUntil > this.tick;
+      if (!frozen) c.frostSpeed = null;
+      else c.frostSpeed ??= speedForward;
       const eligible =
         (c.connected || c.bot) && forward.dot(a.t) > 0.5 && !brake && !boost && !frozen && !hit;
       if (!eligible) c.catchUp = 0;
       const drive = drivingControl(
         speedForward,
         c,
-        { speed: Math.hypot(vel.x, vel.z), turn, brake, boost, frozen, hit },
+        {
+          speed: Math.hypot(vel.x, vel.z),
+          turn,
+          brake,
+          boost,
+          frozen,
+          frozenSpeed: c.frostSpeed ?? undefined,
+          hit,
+        },
         DT,
         c.catchUp,
       );
@@ -814,6 +826,7 @@ export class Race {
         car.body.setEnabled(false);
         car.weapon = null;
         car.boostUntil = car.frostUntil = car.hitUntil = 0;
+        car.frostSpeed = null;
         car.catchUp = car.reverseHold = car.steering = car.drift = 0;
         car.reversing = false;
         car.invulnerableUntil = Infinity;
@@ -934,8 +947,8 @@ export class Race {
           v.x * Math.cos(bodyYaw(c.body)) - v.z * Math.sin(bodyYaw(c.body)),
           Math.max(0.1, v.x * Math.sin(bodyYaw(c.body)) + v.z * Math.cos(bodyYaw(c.body))),
         ),
-        frozen: c.frostUntil > this.tick,
-        boosted: c.boostUntil > this.tick,
+        frozen: c.alive && c.frostUntil > this.tick,
+        boosted: c.boostUntil > this.tick && c.frostUntil <= this.tick,
         catchUpBonus: this.phase === 'racing' ? c.catchUp * CATCH_UP.maxSpeedBonus : 0,
         invulnerable: c.invulnerableUntil > this.tick,
       };

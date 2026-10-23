@@ -185,6 +185,9 @@ export function controller(session: Session) {
     const inLobby = controllerLobbyMode(state);
     $('.pad-shell').dataset.lobby = String(inLobby);
     $('.pad-shell').dataset.phase = state.phase;
+    $('.pad-shell').dataset.frozen = String(car.alive && car.frozen);
+    for (const id of ['#left-control', '#right-control'])
+      $(id).setAttribute('aria-disabled', String(car.alive && car.frozen));
     finished = !!car.finishPlace;
     $('#pad-controls').hidden = inLobby || finished;
     const mayReady = inLobby || state.phase === 'countdown';
@@ -213,7 +216,9 @@ export function controller(session: Session) {
               ? t('Pauza — czekamy na ekran hosta.')
               : state.phase === 'segment'
                 ? raceMessage(state)
-                : t('Gaz automatyczny. Zakręty pokonujesz sam.');
+                : car.alive && car.frozen
+                  ? t('ZAMROŻENIE · prędkość zachowana, skręt zablokowany.')
+                  : t('Gaz automatyczny. Zakręty pokonujesz sam.');
     const weapon = car.weapon ? weaponText(car.weapon) : null;
     $('#weapon-icon').textContent = weapon?.icon ?? '+';
     $('#weapon-name').textContent = weapon?.name.toUpperCase() ?? t('PUSTY SLOT');

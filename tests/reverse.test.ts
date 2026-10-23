@@ -75,9 +75,14 @@ test('reverse speed and acceleration stay bounded without nitro or catch-up stac
     );
     assert.ok(drivingControl(-8, state, { ...held, boost }, DT, 1).acceleration > 0);
     assert.equal(
-      drivingControl(-DRIVING.reverseSpeed * 0.55, state, { ...held, boost, frozen: true }, DT, 1)
-        .acceleration,
-      0,
+      drivingControl(
+        -DRIVING.reverseSpeed,
+        state,
+        { ...held, boost, frozen: true, frozenSpeed: -DRIVING.reverseSpeed },
+        DT,
+        1,
+      ).acceleration,
+      -DRIVING.reverseSpeed * DRIVING.linearDamping,
     );
   }
 });

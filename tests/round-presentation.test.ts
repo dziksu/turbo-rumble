@@ -41,7 +41,7 @@ function setup() {
   return race;
 }
 
-test('a real frost projectile slows its target for 1.6 seconds, including the former expiry boundary', () => {
+test('a real frost projectile freezes controls for 1.6 seconds, including the former expiry boundary', () => {
   const race = setup();
   try {
     const source = race.cars.get('p0')!,

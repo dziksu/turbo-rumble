@@ -1,5 +1,6 @@
 import RAPIER from '@dimforge/rapier3d-compat';
 import { Quaternion, Vector3 } from 'three';
+import { applyFrost } from './frost.ts';
 import type { Race } from './simulation.ts';
 import type { Car, Shot } from './entities.ts';
 import { COLORS, type Vec } from './types.ts';
@@ -8,7 +9,6 @@ import {
   CAR_MASS as MASS,
   NITRO_EXHAUST,
   MINE_OWNER_PROTECTION_TICKS,
-  FROST_DURATION_TICKS,
   PROJECTILE_RANGE,
   PULSE,
 } from './rules.ts';
@@ -93,7 +93,12 @@ export function updateNitroExhaust(race: Race): void {
   if (race.phase !== 'racing') return;
   const victims = new Map<string, { car: Car; backward: Vector3 }>();
   for (const source of race.cars.values()) {
-    if (!source.alive || source.boostUntil <= race.tick || race.pendingDeaths.has(source.id))
+    if (
+      !source.alive ||
+      source.frostUntil > race.tick ||
+      source.boostUntil <= race.tick ||
+      race.pendingDeaths.has(source.id)
+    )
       continue;
     const rotation = new Quaternion().copy(source.body.rotation()),
       backward = new Vector3(0, 0, -1).applyQuaternion(rotation),
@@ -225,8 +230,7 @@ export function blast(
 }
 function finishProjectile(race: Race, shot: Shot, target?: Car): void {
   if (shot.kind === 'frost') {
-    if (target?.alive && target.invulnerableUntil <= race.tick)
-      target.frostUntil = race.tick + FROST_DURATION_TICKS;
+    if (target) applyFrost(target, race.tick);
     race.emit('frost', shot.position, 'MRÓZ');
   } else {
     // Protection belongs to this rocket, never to the owner's global immunity timer.

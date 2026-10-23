@@ -252,7 +252,10 @@ export const EN = {
   Mina: 'Mine',
   'Pułapka za samochodem': 'Drops a trap behind your car',
   Mróz: 'Frost',
-  'Spowalnia trafionego przeciwnika': 'Slows down the car it hits',
+  'Zamraża sterowanie na 1,6 s. Auto zachowuje prędkość.':
+    'Freezes steering for 1.6 s. The car keeps its speed.',
+  'ZAMROŻENIE · prędkość zachowana, skręt zablokowany.':
+    'FROZEN · speed preserved, steering locked.',
   Impuls: 'Pulse',
   'Odpycha auta wokół ciebie': 'Pushes nearby cars away',
   'LOBBY / USTAWIENIA WYŚCIGU': 'LOBBY / RACE SETUP',

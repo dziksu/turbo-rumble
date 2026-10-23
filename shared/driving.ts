@@ -2,6 +2,7 @@ import { CATCH_UP } from './catch-up.ts';
 
 export const DRIVING = {
   speed: 22,
+  linearDamping: 0.1,
   nitroMultiplier: 1.35,
   turnRate: 3.3,
   driftSpeed: 10,
@@ -18,12 +19,12 @@ export const DRIVING = {
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 export function drivingTargetSpeed(brake: boolean, boost: boolean, frozen: boolean, catchUp = 0) {
   if (brake) return 0;
-  const multiplier = boost
-    ? DRIVING.nitroMultiplier
-    : frozen
-      ? 1
+  const multiplier = frozen
+    ? 1
+    : boost
+      ? DRIVING.nitroMultiplier
       : 1 + CATCH_UP.maxSpeedBonus * clamp(catchUp, 0, 1);
-  return DRIVING.speed * (frozen ? 0.55 : 1) * multiplier;
+  return DRIVING.speed * multiplier;
 }
 
 interface DrivingState {
@@ -39,6 +40,7 @@ interface DrivingInput {
   brake: boolean;
   boost: boolean;
   frozen: boolean;
+  frozenSpeed?: number;
   hit: boolean;
 }
 
@@ -51,6 +53,24 @@ export function drivingControl(
   catchUp = 0,
 ) {
   const { brake, boost, frozen, hit } = input;
+  if (frozen) {
+    const target = input.frozenSpeed ?? speedForward;
+    return {
+      steering: 0,
+      drift: 0,
+      reverseHold: 0,
+      reversing: false,
+      brake: false,
+      // Wheel forces maintain the captured speed and compensate chassis drag.
+      // No velocity/pose writes: walls, airborne motion and weapon impulses still win.
+      acceleration: clamp(
+        (target - speedForward) * 3.5 + target * DRIVING.linearDamping,
+        -22,
+        DRIVING.acceleration,
+      ),
+      yawRate: 0,
+    };
+  }
   // Hold at a near stop before engaging reverse; keep that gear until release.
   // Sideways motion and airborne/impact frames must not count as a stopped car.
   const mayReverse = brake && state.grounded && !hit;
@@ -81,7 +101,7 @@ export function drivingControl(
   const assistance =
     !brake && !boost && !frozen && !hit && state.grounded ? clamp(catchUp, 0, 1) : 0;
   const target = reversing
-    ? -DRIVING.reverseSpeed * (frozen ? 0.55 : 1)
+    ? -DRIVING.reverseSpeed
     : drivingTargetSpeed(brake, boost, frozen, assistance);
   return {
     steering,
@@ -98,7 +118,6 @@ export function drivingControl(
           ? DRIVING.nitroAcceleration
           : DRIVING.acceleration * (1 + CATCH_UP.maxAccelerationBonus * assistance),
     ),
-    yawRate:
-      steering * DRIVING.turnRate * clamp(Math.abs(speedForward) / 7, 0.25, 1) * (frozen ? 0.6 : 1),
+    yawRate: steering * DRIVING.turnRate * clamp(Math.abs(speedForward) / 7, 0.25, 1),
   };
 }

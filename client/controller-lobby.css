@@ -306,3 +306,12 @@
   line-height: 1.4;
   color: #912d22;
 }
+
+.pad-shell[data-frozen='true'] .pad-key {
+  background: #b9ecf9;
+  color: #284c64;
+  border-color: #edfaff;
+}
+.pad-shell[data-frozen='true'] #pad-status-text {
+  color: #b9ecf9;
+}

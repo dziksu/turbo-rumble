@@ -191,14 +191,14 @@ test('rocket sweeps into a target and eliminates it', () => {
     r.dispose();
   }
 });
-test('frost reduces target speed and expires on authoritative ticks', () => {
+test('frost preserves a stopped target and expires on authoritative ticks', () => {
   const r = setup();
   try {
     const c = r.cars.get('p0')!;
     c.frostUntil = r.tick + 200;
     run(r, 120);
     const v = c.body.linvel();
-    assert.ok(Math.hypot(v.x, v.z) < 12);
+    assert.ok(Math.hypot(v.x, v.z) < 0.2);
     assert.equal(r.snapshot('TEST22').cars[0].frozen, true);
     run(r, 90);
     assert.equal(r.snapshot('TEST22').cars[0].frozen, false);

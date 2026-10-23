@@ -591,6 +591,7 @@ export class GameScene {
       v.last = c;
       v.equipment.setState(c);
       v.exhaust.visible = c.alive && c.boosted && ['racing', 'paused'].includes(snapshot.phase);
+      v.appearance.setFrozen(c.alive && c.frozen);
       v.appearance.setWrecked(!c.alive && !!c.wrecked);
       v.group.visible = c.alive || !!c.wrecked || snapshot.phase === 'lobby';
       v.ring.visible = c.alive;
@@ -731,7 +732,7 @@ export class GameScene {
       }
       if (v.ring.material instanceof T.MeshBasicMaterial)
         v.ring.material.opacity = c.invulnerable ? 0.35 + Math.sin(time / 65) * 0.25 : 0.8;
-      v.model.scale.setScalar(c.alive && c.frozen ? 1 + Math.sin(time / 60) * 0.025 : 1);
+      v.model.scale.setScalar(1);
       const active = this.snapshot?.phase === 'racing' && c.alive && !c.finishPlace;
       const paused = this.snapshot?.phase === 'paused';
       const steer = c.alive && (active || paused) ? (c.steering ?? 0) : 0;

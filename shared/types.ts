@@ -154,6 +154,11 @@ export const WEAPONS: Record<Weapon, { name: string; icon: string; color: string
       help: 'Pocisk do przodu. Trafienie eliminuje.',
     },
     mine: { name: 'Mina', icon: '✹', color: '#ec77a6', help: 'Pułapka za samochodem' },
-    frost: { name: 'Mróz', icon: '❄', color: '#83ddff', help: 'Spowalnia trafionego przeciwnika' },
+    frost: {
+      name: 'Mróz',
+      icon: '❄',
+      color: '#83ddff',
+      help: 'Zamraża sterowanie na 1,6 s. Auto zachowuje prędkość.',
+    },
     pulse: { name: 'Impuls', icon: '◎', color: '#b9a1ff', help: 'Odpycha auta wokół ciebie' },
   };

@@ -19,6 +19,7 @@ export interface Car extends Driver {
   weapon: Weapon | null;
   boostUntil: number;
   frostUntil: number;
+  frostSpeed: number | null;
   invulnerableUntil: number;
   outsideTicks: number;
   lastInputTick: number;
