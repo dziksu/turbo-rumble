@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.5.0](https://github.com/dziksu/turbo-rumble/compare/v1.4.0...v1.5.0) (2026-10-24)
+
+### Features
+
+- **timber-run:** rebuild woodland scenery and connect the river ([cc7729c](https://github.com/dziksu/turbo-rumble/commit/cc7729c9957d7f4f5e9805293c9ed7da429d5b9b))
+
 ## [1.4.0](https://github.com/dziksu/turbo-rumble/compare/v1.3.0...v1.4.0) (2026-10-24)
 
 ### Features
