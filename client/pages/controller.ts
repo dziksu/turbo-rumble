@@ -6,6 +6,7 @@ import {
   raceMessage,
   translateMessage,
 } from '../i18n.ts';
+import { mountScreenAwake } from '../screen-awake-controls.ts';
 import { lobbyReadiness } from '../lobby-readiness.ts';
 import { roomAdmin } from '../room-admin.ts';
 import { roomSettings } from '../room-settings.ts';
@@ -21,6 +22,7 @@ export function controller(session: Session) {
       <a class="brand small" href="/">${logo}</a
       ><span class="pad-room">POKÓJ <b>${session.code}</b></span
       ><span id="pad-connection" class="connection">Łączenie…</span>
+      <button class="icon-button screen-awake-button" id="screen-awake" type="button"></button>
     </header>
     <section class="pad-identity">
       <span class="driver-badge" id="pad-number">1</span>
@@ -71,6 +73,7 @@ export function controller(session: Session) {
     <div class="pad-countdown" id="pad-countdown" hidden></div>
   </div>`;
   mountLanguageSwitch(app);
+  mountScreenAwake($<HTMLButtonElement>('#screen-awake'));
   const socket = connectGame(session),
     input = createInput(socket);
   const updateSettings = roomSettings($('#pad-settings'), socket, { playerId: session.playerId! });
@@ -254,17 +257,5 @@ export function controller(session: Session) {
   onLanguageChange(() => {
     $('#pad-connection').textContent = socket.connected ? t('Połączono') : t('Brak połączenia');
     if (latest) render(latest);
-  });
-  // Wake lock is an enhancement; ordinary HTTP LAN play still works without it.
-  const wake = async () => {
-    try {
-      if ('wakeLock' in navigator) await navigator.wakeLock.request('screen');
-    } catch {
-      /* Optional browser capability; gameplay continues without it. */
-    }
-  };
-  document.addEventListener('pointerdown', () => void wake(), { once: true });
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) void wake();
   });
 }

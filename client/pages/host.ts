@@ -1,3 +1,4 @@
+import { mountScreenAwake } from '../screen-awake-controls.ts';
 import { mountAudioControls } from '../audio-controls.ts';
 import {
   mountLanguageSwitch,
@@ -79,7 +80,7 @@ export async function hostPage(code: string, watch = false) {
   if (!watch) localStorage.setItem('turbo:host:' + code, JSON.stringify(session));
   if (location.hash) history.replaceState(null, '', location.pathname + location.search);
   document.body.className = 'host-page';
-  app.innerHTML = /* HTML */ `${header(`<div class="host-track"><span class="live-dot"></span> <span id="host-map-name">SUNDOWN CIRCUIT XL</span> <b id="host-map-index">01</b></div><div class="host-actions"><span id="host-admin"></span><a class="button subtle room-share" id="share-room" href="/room/${code}" target="_blank" rel="noopener">${watch ? 'Dołącz jako kontroler' : 'Udostępnij pokój'}</a><span id="host-connection" class="connection">Łączenie…</span><button class="icon-button" id="sound-toggle" aria-label="Włącz dźwięk">♪</button><button class="icon-button" id="fullscreen" aria-label="Pełny ekran">⛶</button></div>`)}
+  app.innerHTML = /* HTML */ `${header(`<div class="host-track"><span class="live-dot"></span> <span id="host-map-name">SUNDOWN CIRCUIT XL</span> <b id="host-map-index">01</b></div><div class="host-actions"><span id="host-admin"></span><a class="button subtle room-share" id="share-room" href="/room/${code}" target="_blank" rel="noopener">${watch ? 'Dołącz jako kontroler' : 'Udostępnij pokój'}</a><span id="host-connection" class="connection">Łączenie…</span><button class="icon-button" id="sound-toggle" aria-label="Włącz dźwięk">♪</button><button class="icon-button screen-awake-button" id="screen-awake" type="button"></button><button class="icon-button" id="fullscreen" aria-label="Pełny ekran">⛶</button></div>`)}
     <main class="arena">
       <div class="game-viewport">
         <div id="game-world"></div>
@@ -148,6 +149,7 @@ export async function hostPage(code: string, watch = false) {
       </div>
     </main>`;
   mountLanguageSwitch(app);
+  mountScreenAwake($<HTMLButtonElement>('#screen-awake'));
   $('#results').addEventListener('cancel', (event) => {
     event.preventDefault();
     if (!spectator) void returnToLobby();

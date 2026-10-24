@@ -1,5 +1,13 @@
 // Gettext-style source keys keep Polish templates readable and allow typed runtime messages.
 export const EN = {
+  'Ekran pozostaje włączony': 'Screen stays on',
+  'Ochrona przed wygaszaniem wymaga HTTPS i obsługiwanej przeglądarki.':
+    'Keeping the screen on requires HTTPS and a supported browser.',
+  'Wygaszanie ekranu dozwolone': 'Screen sleep allowed',
+  'Przeglądarka nie utrzymuje ekranu włączonego. Kliknij, aby ponowić.':
+    'The browser is not keeping the screen on. Click to retry.',
+  'Oczekiwanie na utrzymanie ekranu włączonego': 'Waiting to keep the screen on',
+
   'Administracja pokoju': 'Room admin',
   'Przekaż administratora': 'Transfer admin',
   'Administrator: {name}': 'Admin: {name}',

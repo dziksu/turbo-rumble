@@ -1,0 +1,19 @@
+.screen-awake-button {
+  flex-shrink: 0;
+  min-width: 38px;
+  min-height: 38px;
+  font-size: 20px;
+}
+.screen-awake-button[data-screen-awake='active'] {
+  color: #182d28;
+  background: #a0f5c7;
+  border-color: #70e6a7;
+}
+.screen-awake-button[data-screen-awake='blocked'] {
+  color: #ffcf8c;
+  border-color: #b58d56;
+}
+.screen-awake-button:focus-visible {
+  outline: 3px solid #70e6a7;
+  outline-offset: 3px;
+}
