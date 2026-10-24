@@ -1,3 +1,4 @@
+import { inForestRiver } from './forest-river.ts';
 import { CORRAL_FENCE_HEIGHT } from './desert-layout.ts';
 import { movingHazardPose } from './biome-layout.ts';
 import * as weapons from './weapons.ts';
@@ -756,8 +757,8 @@ export class Race {
           });
         if (
           p.y < -0.9 &&
-          this.track.isGap(pr.s) &&
-          Math.abs(pr.lateral) < this.track.ROAD_WIDTH + 2
+          ((this.track.biome?.river && inForestRiver(this.track.biome.river, p)) ||
+            (this.track.isGap(pr.s) && Math.abs(pr.lateral) < this.track.ROAD_WIDTH + 2))
         ) {
           if (this.settings.mapId === 'volcano') {
             c.wreckUntil = this.tick + 70;

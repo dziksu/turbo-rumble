@@ -3,6 +3,7 @@ import { syncPickupVisuals } from './pickup-visuals.ts';
 import { Vector3 } from 'three';
 import { GameScene } from './scene.ts';
 import { getTrack } from '../shared/track.ts';
+import { createForestLayout } from './forest-layout.ts';
 import { MAPS, type MapId } from '../shared/maps.ts';
 
 export async function mountMapCheck(app: HTMLElement) {
@@ -130,12 +131,14 @@ export async function mountMapCheck(app: HTMLElement) {
   biome.onchange = () => {
     location.href = `/map-check?map=${biome.value}&s=0&view=overview`;
   };
-  scene.scene.fog = null;
+  if (mapId !== 'forest') scene.scene.fog = null;
   scene.camera.far = 2200;
   scene.camera.updateProjectionMatrix();
   const locations = document.querySelector<HTMLSelectElement>('#map-location')!,
     view = document.querySelector<HTMLSelectElement>('#map-view')!,
     position = document.querySelector<HTMLInputElement>('#map-position')!;
+  const woodland = mapId === 'forest' ? createForestLayout(getTrack(mapId)) : null;
+  if (woodland) view.add(new Option('Polana / dzika przyroda', 'woodland'));
   const points: [string, number][] = [
     ['Start / meta', 0],
     ['Prosta', 80],
@@ -179,7 +182,9 @@ export async function mountMapCheck(app: HTMLElement) {
   position.value = String(
     Number.isFinite(initial) ? Math.max(0, Math.min(TRACK_LENGTH, initial)) : 80,
   );
-  view.value = ['chase', 'left', 'right', 'overview'].includes(query.get('view') ?? '')
+  view.value = ['chase', 'left', 'right', 'overview', ...(woodland ? ['woodland'] : [])].includes(
+    query.get('view') ?? '',
+  )
     ? query.get('view')!
     : 'chase';
   function updateView() {
@@ -201,7 +206,15 @@ export async function mountMapCheck(app: HTMLElement) {
         ),
         target: OVERVIEW_CENTER.clone(),
       };
-    else if (mode === 'chase') scene.inspectionPose = cameraPose(s);
+    else if (mode === 'woodland' && woodland?.clearings.length) {
+      const center = woodland.clearings.reduce((nearest, p) =>
+        p.distanceToSquared(at.p) < nearest.distanceToSquared(at.p) ? p : nearest,
+      );
+      scene.inspectionPose = {
+        target: center.clone().add(new Vector3(0, 1, 0)),
+        position: center.clone().add(new Vector3(12, 11, 14)),
+      };
+    } else if (mode === 'chase') scene.inspectionPose = cameraPose(s);
     else {
       const side = mode === 'left' ? 1 : -1,
         target = at.p.clone().addScaledVector(at.n, side * (at.width - 0.3));

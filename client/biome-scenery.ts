@@ -1,4 +1,6 @@
 import * as T from 'three';
+import { ForestScenery } from './forest-scenery.ts';
+import { bakeForestStatics, forestGround } from './forest-models.ts';
 import {
   BIOME_GROUND_Y,
   VOLCANO_ISLAND_RADIUS,
@@ -11,6 +13,7 @@ type Flow = { mesh: T.Mesh; baseX: number; lava: boolean };
 /** Landmarks and decorative animation live with one map root; collision descriptors stay shared. */
 export class BiomeScenery {
   ground: T.Mesh;
+  forest: ForestScenery | null = null;
   moving = new Map<number, T.Group>();
   private animations: ((seconds: number) => void)[] = [];
   private materials = new Map<string, T.MeshStandardMaterial>();
@@ -216,7 +219,13 @@ export class BiomeScenery {
     geometry.setAttribute('position', new T.BufferAttribute(data.vertices, 3));
     geometry.setIndex(new T.BufferAttribute(data.indices, 1));
     geometry.computeVertexNormals();
-    this.ground = new T.Mesh(geometry, this.mat(track.id === 'forest' ? '#517947' : '#303948'));
+    this.ground =
+      track.id === 'forest'
+        ? new T.Mesh(
+            forestGround(geometry),
+            new T.MeshStandardMaterial({ vertexColors: true, roughness: 0.94 }),
+          )
+        : new T.Mesh(geometry, this.mat('#303948'));
     this.ground.name = 'biome-drivable-ground';
     this.ground.receiveShadow = true;
     root.add(this.ground);
@@ -285,6 +294,8 @@ export class BiomeScenery {
           this.box(group, 0.4, 0.15, 1.2, x, 0.66, 0, '#363b43');
         this.cylinder(group, 0.85, 1.4, 0, 0, 0, '#b6a38a');
       }
+      if (track.id === 'forest') bakeForestStatics(group);
+      group.userData.forestDynamic = true;
       this.moving.set(hazard.id, group);
       const base = new T.Group();
       base.position.copy(hazard.position).setY(BIOME_GROUND_Y);
@@ -338,6 +349,8 @@ export class BiomeScenery {
           const spoke = this.box(rotor, 0.23, 7.2, 0.23, 0, 0, 0, '#715738');
           spoke.rotation.x = angle;
         }
+        bakeForestStatics(rotor);
+        rotor.userData.forestDynamic = true;
         const shaft = this.cylinder(wheel, 0.4, 6, 0, 0, 0, '#4d5b51');
         shaft.rotation.z = Math.PI / 2;
         this.animations.push((t) => (rotor.rotation.x = t * 0.65));
@@ -345,25 +358,6 @@ export class BiomeScenery {
           for (const z of [-gap.length / 2 - 1.5, gap.length / 2 + 1.5])
             this.box(wheel, 0.45, 4, 0.45, x, 0, z, '#7f6848');
           this.box(wheel, 0.45, 0.45, gap.length + 4, x, 0.3, 0, '#a78b57');
-        }
-        const falls = new T.Group();
-        falls.position.copy(at.p).addScaledVector(at.n, -32);
-        falls.rotation.y = at.yaw;
-        root.add(falls);
-        this.box(falls, 0.4, 4.7, gap.length + 0.2, 0, -3.95, 0, '#539fbc');
-        this.box(falls, 0.3, 0.08, gap.length, 0.2, -1.56, 0, '#b3e2db');
-        for (let i = 0; i < 6; i++) {
-          const strip = this.box(
-            falls,
-            0.15,
-            3.1,
-            0.23,
-            -0.22,
-            -3.8,
-            ((i - 2.5) * gap.length) / 6,
-            '#b3e2db',
-          );
-          this.animations.push((t) => (strip.position.y = -3.7 - ((t * 1.2 + i * 0.23) % 1.4)));
         }
       } else {
         for (const side of [-1, 1]) {
@@ -478,10 +472,15 @@ export class BiomeScenery {
           (flow.mesh.position.x =
             flow.baseX + Math.sin(t * (flow.lava ? 0.45 : 0.8) + flow.baseX) * 1.7),
       );
+    if (track.id === 'forest') {
+      bakeForestStatics(root);
+      this.forest = new ForestScenery(root, track);
+    }
     this.update(0, false);
   }
   update(seconds: number, reducedMotion: boolean) {
     const t = reducedMotion ? 0 : seconds;
     for (const animation of this.animations) animation(t);
+    this.forest?.update(seconds, reducedMotion);
   }
 }

@@ -13,12 +13,12 @@ const PROFILES = {
     power: 2.5,
   },
   forest: {
-    ambient: '#dbece5',
-    sky: '#dbf4ee',
-    ground: '#3c5741',
-    fill: 1.8,
-    sun: '#f2ffe9',
-    power: 3.2,
+    ambient: '#bacfce',
+    sky: '#c9dfd7',
+    ground: '#274533',
+    fill: 1.35,
+    sun: '#ffe8bb',
+    power: 2.65,
   },
   volcano: {
     ambient: '#e7c5dc',
@@ -63,7 +63,9 @@ export class SceneLighting {
     // Keep the light basis fixed while moving only its orthographic window. Snapping that
     // window to shadow texels prevents camera movement from making static shadows shimmer.
     this.sun.target.position.copy(track.OVERVIEW_CENTER);
-    this.sun.position.copy(track.OVERVIEW_CENTER).add(new T.Vector3(-400, 700, -400));
+    this.sun.position
+      .copy(track.OVERVIEW_CENTER)
+      .add(track.id === 'forest' ? new T.Vector3(-450, 650, 180) : new T.Vector3(-400, 700, -400));
     this.sun.updateMatrixWorld(true);
     this.sun.target.updateMatrixWorld(true);
     this.sun.shadow.updateMatrices(this.sun);

@@ -841,6 +841,14 @@ export class GameScene {
       this.camera.position.copy(this.cameraBase);
       this.camera.lookAt(this.track.OVERVIEW_CENTER);
     }
+    if (this.track.id === 'forest' && this.scene.fog instanceof T.Fog) {
+      const close =
+        racing ||
+        (this.inspectionPose &&
+          this.inspectionPose.position.distanceTo(this.inspectionPose.target) < 120);
+      this.scene.fog.near = close ? 95 : this.track.OVERVIEW_RADIUS * 2.1;
+      this.scene.fog.far = close ? 310 : this.track.OVERVIEW_RADIUS * 4.3;
+    }
     const paused = this.snapshot?.phase === 'paused',
       offset = this.shake.sample(dt, this.reducedMotion.matches || !racing || paused);
     this.camera.translateX(offset.x);

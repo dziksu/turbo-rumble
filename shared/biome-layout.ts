@@ -1,5 +1,6 @@
 import { Quaternion, Vector3 } from 'three';
 import { cutTerrain } from './terrain.ts';
+import { createForestRiver, inForestRiver, forestRiverTerrain } from './forest-river.ts';
 import type { MapId } from './maps.ts';
 
 export const BIOME_GROUND_Y = -0.18;
@@ -58,6 +59,7 @@ export function createBiomeLayout(
   gaps: { s: number; length: number }[],
 ) {
   const forest = id === 'forest';
+  const river = forest ? createForestRiver(gaps, sample) : null;
   const props: BiomeProp[] = [];
   const add = (u: number, side: number, kind: BiomeProp['kind'], size: Vector3, extra = 0) => {
     const at = sample(u * length);
@@ -102,6 +104,7 @@ export function createBiomeLayout(
   }
   const clearProps = props.filter((prop, index) => {
     const radius = Math.hypot(prop.size.x, prop.size.z) / 2;
+    if (river && inForestRiver(river, prop.position, radius + 2)) return false;
     for (let i = 0; i < 320; i++) {
       const at = sample((i / 320) * length);
       if (at.p.distanceTo(prop.position) < at.width + radius + 2) return false;
@@ -180,8 +183,11 @@ export function createBiomeLayout(
         return { x: Math.sin(a) * VOLCANO_ISLAND_RADIUS, z: Math.cos(a) * VOLCANO_ISLAND_RADIUS };
       });
   // cutTerrain expects clockwise x/z boundary vertices (upward-facing triangles).
-  const terrain = cutTerrain(cuts, BIOME_GROUND_Y, 320, boundary?.reverse());
+  const terrain = river
+    ? forestRiverTerrain(river, BIOME_GROUND_Y)
+    : cutTerrain(cuts, BIOME_GROUND_Y, 320, boundary?.reverse());
   return {
+    river,
     props: clearProps,
     hazards,
     terrain,
