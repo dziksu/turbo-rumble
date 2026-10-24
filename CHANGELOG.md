@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.0](https://github.com/dziksu/turbo-rumble/compare/v1.3.0...v1.4.0) (2026-10-24)
+
+### Features
+
+- **display:** keep game screens awake with native wake locks ([9548127](https://github.com/dziksu/turbo-rumble/commit/9548127a68764d04a76c4271bc223635951a1df7))
+
 ## [1.3.0](https://github.com/dziksu/turbo-rumble/compare/v1.2.1...v1.3.0) (2026-10-23)
 
 ### Features
