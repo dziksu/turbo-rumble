@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.0](https://github.com/dziksu/turbo-rumble/compare/v1.5.0...v1.6.0) (2026-10-25)
+
+### Features
+
+- **aloha-inferno:** enrich tropical scenery and refresh track previews ([3a27cd1](https://github.com/dziksu/turbo-rumble/commit/3a27cd1c54c814e96eb454c755df35c67e2b9fcd))
+
 ## [1.5.0](https://github.com/dziksu/turbo-rumble/compare/v1.4.0...v1.5.0) (2026-10-24)
 
 ### Features
