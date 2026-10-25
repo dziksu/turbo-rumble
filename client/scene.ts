@@ -348,12 +348,6 @@ export class GameScene {
           rotation: group.quaternion.clone(),
         });
     }
-    if (this.track.id === 'volcano') {
-      const sea = new T.Mesh(new T.PlaneGeometry(1800, 1800), mat('#245b71'));
-      sea.rotation.x = -Math.PI / 2;
-      sea.position.y = -1.8;
-      this.trackRoot.add(sea);
-    }
   }
 
   async loadAssets() {
@@ -380,77 +374,13 @@ export class GameScene {
   }
 
   async loadDecor(root: T.Group) {
-    if (this.track.id === 'desert') {
-      const track = this.track;
-      await addDesertAssets(
-        root,
-        track,
-        () => !this.disposed && root === this.trackRoot,
-        () => this.onAssetError('Część dekoracji jest niedostępna.'),
-      );
-      return;
-    }
-    if (this.track.id === 'forest') return;
-    const loader = new GLTFLoader();
-    const decor =
-      this.track.id === 'volcano'
-        ? ['tree_palm', 'tree_palmBend', 'rock_largeA', 'rock_smallA']
-        : [
-            'tree_palm',
-            'tree_palmBend',
-            'cactus_tall',
-            'cactus_short',
-            'rock_largeA',
-            'rock_largeB',
-            'rock_smallA',
-          ];
-    await Promise.all(
-      decor.map(async (name, index) => {
-        try {
-          const gltf = await loader.loadAsync(`/assets/nature/${name}.glb`);
-          if (this.disposed) {
-            disposeResources([gltf.scene]);
-            return;
-          }
-          if (this.disposed || root !== this.trackRoot) {
-            disposeResources([gltf.scene]);
-            return;
-          }
-          for (let i = 0; i < (index < 2 ? 36 : 26); i++) {
-            const s = (i * 31 + index * 67) % Math.floor(this.track.TRACK_LENGTH),
-              a = this.track.trackAt(s),
-              side = i % 2 ? 1 : -1,
-              d = 12 + ((i * 7 + index * 3) % 24),
-              model = clone(gltf.scene),
-              p = a.p.clone().addScaledVector(a.n, side * d);
-            if (
-              this.track.projectOnTrack(p).distance <
-                this.track.trackAt(this.track.projectOnTrack(p).s).width + 4 ||
-              this.track.biome?.props.some(
-                (prop) =>
-                  prop.position.distanceTo(p) < Math.hypot(prop.size.x, prop.size.z) / 2 + 4,
-              ) ||
-              this.track.isGap(s, 20)
-            )
-              continue;
-            model.position.copy(p);
-            model.position.y = -0.18;
-            model.scale.setScalar(
-              index < 2 ? (this.track.id === 'volcano' ? 5 : 3.4) : index < 4 ? 2.5 : 3.5 + (i % 3),
-            );
-            model.rotation.y = i * 1.7;
-            model.traverse((o) => {
-              if (o instanceof T.Mesh) {
-                o.castShadow = true;
-                o.receiveShadow = true;
-              }
-            });
-            root.add(model);
-          }
-        } catch {
-          this.onAssetError('Część dekoracji jest niedostępna.');
-        }
-      }),
+    if (this.track.id !== 'desert') return;
+    const track = this.track;
+    await addDesertAssets(
+      root,
+      track,
+      () => !this.disposed && root === this.trackRoot,
+      () => this.onAssetError('Część dekoracji jest niedostępna.'),
     );
   }
   textSprite(text: string, color: string, background: string | undefined, width = 3, height = 0.8) {
@@ -841,13 +771,21 @@ export class GameScene {
       this.camera.position.copy(this.cameraBase);
       this.camera.lookAt(this.track.OVERVIEW_CENTER);
     }
-    if (this.track.id === 'forest' && this.scene.fog instanceof T.Fog) {
+    if (this.track.id !== 'desert' && this.scene.fog instanceof T.Fog) {
       const close =
         racing ||
         (this.inspectionPose &&
           this.inspectionPose.position.distanceTo(this.inspectionPose.target) < 120);
-      this.scene.fog.near = close ? 95 : this.track.OVERVIEW_RADIUS * 2.1;
-      this.scene.fog.far = close ? 310 : this.track.OVERVIEW_RADIUS * 4.3;
+      this.scene.fog.near = close
+        ? this.track.id === 'forest'
+          ? 95
+          : 128
+        : this.track.OVERVIEW_RADIUS * 2.1;
+      this.scene.fog.far = close
+        ? this.track.id === 'forest'
+          ? 310
+          : 380
+        : this.track.OVERVIEW_RADIUS * 4.3;
     }
     const paused = this.snapshot?.phase === 'paused',
       offset = this.shake.sample(dt, this.reducedMotion.matches || !racing || paused);

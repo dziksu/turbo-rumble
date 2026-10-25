@@ -21,12 +21,12 @@ const PROFILES = {
     power: 2.65,
   },
   volcano: {
-    ambient: '#e7c5dc',
-    sky: '#c4c5e8',
-    ground: '#714039',
-    fill: 1.45,
-    sun: '#ffdbb6',
-    power: 3.7,
+    ambient: '#d2e8dc',
+    sky: '#d0e9e2',
+    ground: '#405645',
+    fill: 1.5,
+    sun: '#ffe6b6',
+    power: 2.8,
   },
 } satisfies Record<MapId, object>;
 

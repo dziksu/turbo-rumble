@@ -1,19 +1,17 @@
 import * as T from 'three';
+import { VolcanoScenery } from './volcano-scenery.ts';
+import { tropicalGround } from './volcano-models.ts';
+import { bakeStaticScenery } from './scenery-geometry.ts';
 import { ForestScenery } from './forest-scenery.ts';
 import { bakeForestStatics, forestGround } from './forest-models.ts';
-import {
-  BIOME_GROUND_Y,
-  VOLCANO_ISLAND_RADIUS,
-  movingHazardPose,
-  type BiomeProp,
-} from '../shared/biome-layout.ts';
+import { BIOME_GROUND_Y, movingHazardPose, type BiomeProp } from '../shared/biome-layout.ts';
 import type { Track } from '../shared/track.ts';
 
-type Flow = { mesh: T.Mesh; baseX: number; lava: boolean };
 /** Landmarks and decorative animation live with one map root; collision descriptors stay shared. */
 export class BiomeScenery {
   ground: T.Mesh;
   forest: ForestScenery | null = null;
+  volcano: VolcanoScenery | null = null;
   moving = new Map<number, T.Group>();
   private animations: ((seconds: number) => void)[] = [];
   private materials = new Map<string, T.MeshStandardMaterial>();
@@ -111,7 +109,16 @@ export class BiomeScenery {
     group.rotation.y = prop.yaw;
     root.add(group);
     const { x: w, y: h, z: d } = prop.size;
-    this.box(group, w + 0.8, 0.25, d + 0.8, 0, 0.02, 0, '#777f68');
+    this.box(
+      group,
+      w + 0.8,
+      0.25,
+      d + 0.8,
+      0,
+      0.02,
+      0,
+      prop.kind === 'basalt' ? '#3e4947' : '#777f68',
+    );
     if (prop.kind === 'tent') {
       this.roof(group, w, d, 0, index % 2 ? '#d2a14d' : '#678d85');
       const flap = this.box(group, 1.5, 2.2, 0.09, 0, 1.1, d / 2 + 0.02, '#253f3d');
@@ -168,7 +175,7 @@ export class BiomeScenery {
           Math.sin(i * 2.4) * w * 0.25,
           height / 2,
           Math.cos(i * 2.4) * d * 0.25,
-          i % 2 ? '#49424b' : '#62545b',
+          i % 2 ? '#3b4449' : '#515b58',
           6,
         );
       }
@@ -192,6 +199,8 @@ export class BiomeScenery {
       face.rotation.z = 0.8;
       face.position.y = 0.6;
       dish.add(face);
+      bakeStaticScenery(dish, 'volcano');
+      dish.userData.sceneryDynamic = true;
       this.animations.push((t) => (dish.rotation.y = t * 0.25 + index));
       for (const side of [-1, 1])
         this.cylinder(group, 0.7, 2, side * w * 0.32, h + 0.1, -d * 0.28, '#58646b');
@@ -212,7 +221,7 @@ export class BiomeScenery {
       this.box(group, 0.25, 3.2, 0.25, side * w * 0.45, 1.7, d / 2 + 2.7, '#a9814f');
     if (prop.kind === 'mill') this.box(group, 1.3, 4, 1.3, w * 0.25, h - 1.5, -d * 0.25, '#6e6c61');
   }
-  constructor(root: T.Group, track: Track, label: (text: string) => T.Sprite, flows: Flow[] = []) {
+  constructor(root: T.Group, track: Track, label: (text: string) => T.Sprite) {
     const layout = track.biome!;
     const data = layout.terrain,
       geometry = new T.BufferGeometry();
@@ -225,7 +234,10 @@ export class BiomeScenery {
             forestGround(geometry),
             new T.MeshStandardMaterial({ vertexColors: true, roughness: 0.94 }),
           )
-        : new T.Mesh(geometry, this.mat('#303948'));
+        : new T.Mesh(
+            tropicalGround(geometry),
+            new T.MeshStandardMaterial({ vertexColors: true, roughness: 0.96 }),
+          );
     this.ground.name = 'biome-drivable-ground';
     this.ground.receiveShadow = true;
     root.add(this.ground);
@@ -266,6 +278,7 @@ export class BiomeScenery {
             depthWrite: false,
           }),
         );
+        steam.userData.sceneryDynamic = true;
         pipe.add(steam);
         this.animations.push((t) => {
           const f = (t * 0.3 + index * 0.4) % 1;
@@ -294,7 +307,7 @@ export class BiomeScenery {
           this.box(group, 0.4, 0.15, 1.2, x, 0.66, 0, '#363b43');
         this.cylinder(group, 0.85, 1.4, 0, 0, 0, '#b6a38a');
       }
-      if (track.id === 'forest') bakeForestStatics(group);
+      bakeStaticScenery(group, track.id);
       group.userData.forestDynamic = true;
       this.moving.set(hazard.id, group);
       const base = new T.Group();
@@ -359,69 +372,9 @@ export class BiomeScenery {
             this.box(wheel, 0.45, 4, 0.45, x, 0, z, '#7f6848');
           this.box(wheel, 0.45, 0.45, gap.length + 4, x, 0.3, 0, '#a78b57');
         }
-      } else {
-        for (const side of [-1, 1]) {
-          const jet = new T.Group();
-          jet.position
-            .copy(at.p)
-            .addScaledVector(at.n, side * (at.width + 9))
-            .setY(-1.5);
-          root.add(jet);
-          const plume = new T.Mesh(
-            new T.ConeGeometry(1.5, 5.5, 7),
-            new T.MeshBasicMaterial({ color: '#ffae35', toneMapped: false }),
-          );
-          plume.position.y = 2;
-          jet.add(plume);
-          for (let i = 0; i < 7; i++) {
-            const ember = new T.Mesh(
-              new T.IcosahedronGeometry(0.25 + (i % 2) * 0.15, 0),
-              new T.MeshBasicMaterial({ color: i % 2 ? '#ffcf66' : '#ef7041', toneMapped: false }),
-            );
-            jet.add(ember);
-            this.animations.push((t) => {
-              const f = (t * 0.45 + i * 0.14) % 1;
-              ember.position.set(
-                Math.sin(i * 2.4) * f * 3,
-                1 + Math.sin(f * Math.PI) * 6,
-                Math.cos(i * 2.4) * f * 3,
-              );
-            });
-          }
-          this.animations.push((t) =>
-            plume.scale.set(1, 0.6 + 0.4 * Math.sin(t * 1.8 + side) ** 2, 1),
-          );
-        }
       }
     }
     if (track.id === 'volcano') {
-      const shore = new T.Mesh(
-        new T.RingGeometry(VOLCANO_ISLAND_RADIUS - 8, VOLCANO_ISLAND_RADIUS, 64),
-        this.mat('#b3976c'),
-      );
-      shore.rotation.x = -Math.PI / 2;
-      shore.position.y = BIOME_GROUND_Y + 0.04;
-      shore.receiveShadow = true;
-      root.add(shore);
-      for (let i = 0; i < 3; i++) {
-        const surf = new T.Mesh(
-          new T.RingGeometry(
-            VOLCANO_ISLAND_RADIUS + 2 + i * 3,
-            VOLCANO_ISLAND_RADIUS + 2.3 + i * 3,
-            64,
-          ),
-          new T.MeshBasicMaterial({
-            color: '#a2d6ca',
-            transparent: true,
-            opacity: 0.35,
-            depthWrite: false,
-          }),
-        );
-        surf.rotation.x = -Math.PI / 2;
-        surf.position.y = -1.74;
-        root.add(surf);
-        this.animations.push((t) => surf.scale.setScalar(1 + Math.sin(t * 0.6 + i) * 0.003));
-      }
       // Basalt arches frame the road without obstructing the racing clearance.
       for (const u of [0.095, 0.55]) {
         const at = track.trackAt(u * track.TRACK_LENGTH),
@@ -444,37 +397,13 @@ export class BiomeScenery {
         const top = this.box(arch, at.width * 2 + 7, 2.5, 3.5, 0, 7.3, 0, '#5f535d');
         top.rotation.z = 0.03;
       }
-      for (let i = 0; i < 12; i++) {
-        const puff = new T.Mesh(
-          new T.IcosahedronGeometry(3 + (i % 3), 0),
-          new T.MeshStandardMaterial({
-            color: '#76646c',
-            transparent: true,
-            opacity: 0.24,
-            depthWrite: false,
-          }),
-        );
-        root.add(puff);
-        this.animations.push((t) => {
-          const f = (t * 0.055 + i / 12) % 1;
-          puff.position
-            .copy(track.OVERVIEW_CENTER)
-            .add(
-              new T.Vector3(Math.sin(i * 2.4) * f * 12, 48 + f * 30, Math.cos(i * 2.4) * f * 10),
-            );
-          puff.scale.setScalar(0.5 + f * 1.8);
-        });
-      }
     }
-    for (const flow of flows)
-      this.animations.push(
-        (t) =>
-          (flow.mesh.position.x =
-            flow.baseX + Math.sin(t * (flow.lava ? 0.45 : 0.8) + flow.baseX) * 1.7),
-      );
     if (track.id === 'forest') {
       bakeForestStatics(root);
       this.forest = new ForestScenery(root, track);
+    } else {
+      bakeStaticScenery(root, 'volcano');
+      this.volcano = new VolcanoScenery(root, track);
     }
     this.update(0, false);
   }
@@ -482,5 +411,6 @@ export class BiomeScenery {
     const t = reducedMotion ? 0 : seconds;
     for (const animation of this.animations) animation(t);
     this.forest?.update(seconds, reducedMotion);
+    this.volcano?.update(seconds, reducedMotion);
   }
 }

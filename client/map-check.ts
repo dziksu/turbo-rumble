@@ -131,7 +131,7 @@ export async function mountMapCheck(app: HTMLElement) {
   biome.onchange = () => {
     location.href = `/map-check?map=${biome.value}&s=0&view=overview`;
   };
-  if (mapId !== 'forest') scene.scene.fog = null;
+  if (mapId === 'desert') scene.scene.fog = null;
   scene.camera.far = 2200;
   scene.camera.updateProjectionMatrix();
   const locations = document.querySelector<HTMLSelectElement>('#map-location')!,
@@ -139,6 +139,10 @@ export async function mountMapCheck(app: HTMLElement) {
     position = document.querySelector<HTMLInputElement>('#map-position')!;
   const woodland = mapId === 'forest' ? createForestLayout(getTrack(mapId)) : null;
   if (woodland) view.add(new Option('Polana / dzika przyroda', 'woodland'));
+  if (mapId === 'volcano') {
+    view.add(new Option('Krater / lawa', 'crater'));
+    view.add(new Option('Wybrzeże / tropiki', 'coast'));
+  }
   const points: [string, number][] = [
     ['Start / meta', 0],
     ['Prosta', 80],
@@ -182,9 +186,14 @@ export async function mountMapCheck(app: HTMLElement) {
   position.value = String(
     Number.isFinite(initial) ? Math.max(0, Math.min(TRACK_LENGTH, initial)) : 80,
   );
-  view.value = ['chase', 'left', 'right', 'overview', ...(woodland ? ['woodland'] : [])].includes(
-    query.get('view') ?? '',
-  )
+  view.value = [
+    'chase',
+    'left',
+    'right',
+    'overview',
+    ...(woodland ? ['woodland'] : []),
+    ...(mapId === 'volcano' ? ['crater', 'coast'] : []),
+  ].includes(query.get('view') ?? '')
     ? query.get('view')!
     : 'chase';
   function updateView() {
@@ -206,7 +215,23 @@ export async function mountMapCheck(app: HTMLElement) {
         ),
         target: OVERVIEW_CENTER.clone(),
       };
-    else if (mode === 'woodland' && woodland?.clearings.length) {
+    else if (mode === 'crater')
+      scene.inspectionPose = {
+        target: OVERVIEW_CENTER.clone().add(new Vector3(0, 30, 0)),
+        position: OVERVIEW_CENTER.clone().add(new Vector3(68, 106, 100)),
+      };
+    else if (mode === 'coast') {
+      const normal = at.p.clone().setY(0).normalize(),
+        target = normal.clone().multiplyScalar(231);
+      scene.inspectionPose = {
+        target: target.clone().add(new Vector3(0, 2, 0)),
+        position: target
+          .clone()
+          .addScaledVector(normal, 21)
+          .addScaledVector(at.t, 8)
+          .add(new Vector3(0, 12, 0)),
+      };
+    } else if (mode === 'woodland' && woodland?.clearings.length) {
       const center = woodland.clearings.reduce((nearest, p) =>
         p.distanceToSquared(at.p) < nearest.distanceToSquared(at.p) ? p : nearest,
       );
